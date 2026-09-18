@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIKE MPV - Mecánica</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0c1622">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BIKE MPV">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --navy-950:#0c1622;
+    --navy-900:#132436;
+    --navy-800:#1c3550;
+    --navy-700:#28486a;
+    --orange-500:#e2661c;
+    --orange-400:#f0812f;
+    --orange-100:#fbd8bd;
+    --steel-300:#c3ccd6;
+    --steel-500:#8b98a8;
+    --steel-700:#586777;
+    --cream-50:#f4f1e9;
+    --red-500:#c73a3a;
+    --red-100:#3a1616;
+    --green-500:#3f8f5f;
+    --radius:10px;
+    --shadow:0 8px 24px rgba(0,0,0,.35);
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #1a3049 0%, var(--navy-950) 60%);
+    color:var(--cream-50);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,.brand,.navlabel,.stat-num{font-family:'Oswald',sans-serif;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--navy-700);border-radius:4px;}
+  a{color:inherit;}
+  button{font-family:inherit;cursor:pointer;}
+  input,select,textarea{font-family:inherit;}
+
+  /* ---------- login ---------- */
+  #login-screen{
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  }
+  .login-card{
+    width:100%;max-width:380px;background:var(--navy-900);border:1px solid var(--navy-700);
+    border-radius:16px;padding:32px 28px;box-shadow:var(--shadow);
+    position:relative;overflow:hidden;
+  }
+  .login-card::before{
+    content:"";position:absolute;top:-60px;right:-60px;width:180px;height:180px;border-radius:50%;
+    background:radial-gradient(circle, var(--orange-500) 0%, transparent 70%);opacity:.25;
+  }
+  .medal{
+    width:64px;height:64px;border-radius:50%;margin:0 auto 14px;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 14px rgba(0,0,0,.55);
+  }
+  .medal img{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;}
+  .brand{text-align:center;font-size:22px;letter-spacing:.5px;margin:0 0 2px;color:var(--cream-50);}
+  .brand span{color:var(--orange-400);}
+  .subbrand{text-align:center;color:var(--steel-500);font-size:12.5px;margin-bottom:26px;letter-spacing:.4px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12.5px;color:var(--steel-300);margin-bottom:6px;}
+  .field input{
+    width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--navy-700);
+    background:var(--navy-950);color:var(--cream-50);font-size:14.5px;outline:none;
+  }
+  .field input:focus{border-color:var(--orange-500);}
+  .btn-primary{
+    width:100%;padding:12px;border:none;border-radius:8px;background:var(--orange-500);
+    color:#fff;font-weight:600;font-size:15px;margin-top:6px;transition:background .15s;
+  }
+  .btn-primary:hover{background:var(--orange-400);}
+  .btn-link{background:none;border:none;color:var(--steel-500);font-size:12.5px;width:100%;text-align:center;margin-top:14px;text-decoration:underline;}
+  .login-msg{font-size:12.5px;text-align:center;margin-top:10px;min-height:16px;}
+  .login-msg.err{color:#ff8a8a;}
+  .login-msg.ok{color:#8be0a8;}
+  .hint{font-size:11.5px;color:var(--steel-700);text-align:center;margin-top:18px;line-height:1.5;}
+
+  /* ---------- app shell ---------- */
+  #app{display:none;min-height:100vh;}
+  .shell{display:flex;min-height:100vh;}
+  .sidebar{
+    width:210px;flex:none;background:var(--navy-900);border-right:1px solid var(--navy-700);
+    padding:20px 14px;display:flex;flex-direction:column;gap:4px;
+  }
+  .sidebar .brandmini{display:flex;align-items:center;gap:10px;padding:4px 6px 20px;}
+  .sidebar .brandmini .medal{width:34px;height:34px;margin:0;}
+  .sidebar .brandmini .txt{font-family:'Oswald';font-size:14.5px;line-height:1.1;}
+  .sidebar .brandmini .txt span{color:var(--orange-400);display:block;font-size:10.5px;letter-spacing:1px;color:var(--steel-500);}
+  .navbtn{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:none;border:none;
+    color:var(--steel-300);font-size:14px;text-align:left;
+  }
+  .navbtn .ic{width:18px;text-align:center;}
+  .navbtn:hover{background:var(--navy-800);}
+  .navbtn.active{background:var(--navy-800);color:var(--cream-50);box-shadow:inset 3px 0 0 var(--orange-500);}
+  .sidebar-foot{margin-top:auto;padding-top:14px;border-top:1px solid var(--navy-700);}
+  .sync-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green-500);margin-right:6px;}
+  .sync-line{font-size:11px;color:var(--steel-700);padding:6px;}
+  .logout-btn{width:100%;padding:8px;background:none;border:1px solid var(--navy-700);border-radius:7px;color:var(--steel-500);font-size:12.5px;}
+  .logout-btn:hover{border-color:var(--orange-500);color:var(--orange-400);}
+
+  .main{flex:1;padding:26px 30px;max-width:1100px;}
+  .page-title{font-size:24px;margin:0 0 4px;letter-spacing:.3px;}
+  .page-sub{color:var(--steel-500);font-size:13px;margin:0 0 22px;}
+
+  .card{background:var(--navy-900);border:1px solid var(--navy-700);border-radius:var(--radius);padding:18px;}
+  .grid-cols{display:grid;gap:18px;}
+
+  /* buttons generic */
+  .btn{padding:9px 16px;border-radius:8px;border:1px solid var(--navy-700);background:var(--navy-800);color:var(--cream-50);font-size:13.5px;}
+  .btn:hover{border-color:var(--orange-500);}
+  .btn.orange{background:var(--orange-500);border-color:var(--orange-500);color:#fff;font-weight:600;}
+  .btn.orange:hover{background:var(--orange-400);}
+  .btn.ghost{background:none;}
+  .btn.danger{background:none;border-color:var(--red-500);color:#ff8a8a;}
+  .btn.small{padding:6px 10px;font-size:12px;}
+
+  /* ---------- calendar ---------- */
+  .cal-wrap{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start;}
+  @media (max-width:880px){.cal-wrap{grid-template-columns:1fr;}}
+  .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .cal-head h2{margin:0;font-size:18px;text-transform:capitalize;}
+  .cal-nav{display:flex;gap:6px;}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .cal-dow{text-align:center;font-size:11px;color:var(--steel-700);padding-bottom:4px;}
+  .cal-cell{
+    aspect-ratio:1/0.85;border-radius:8px;background:var(--navy-950);border:1px solid var(--navy-800);
+    padding:6px;font-size:12.5px;position:relative;display:flex;flex-direction:column;justify-content:space-between;
+  }
+  .cal-cell.other{opacity:.28;}
+  .cal-cell.today{border-color:var(--orange-500);}
+  .cal-cell.selected{background:var(--navy-800);border-color:var(--orange-400);}
+  .cal-cell:hover{border-color:var(--steel-700);}
+  .cal-cell .dots{display:flex;gap:3px;flex-wrap:wrap;}
+  .dot{width:6px;height:6px;border-radius:50%;}
+  .dot.in{background:var(--steel-500);}
+  .dot.due{background:var(--orange-500);}
+  .daypanel h3{margin:0 0 2px;font-size:16px;}
+  .daypanel .daysub{color:var(--steel-500);font-size:12px;margin-bottom:14px;}
+  .joblist{display:flex;flex-direction:column;gap:10px;max-height:520px;overflow-y:auto;padding-right:4px;}
+  .jobcard{background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:10px 12px;}
+  .jobcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+  .jobcard .cliente{font-weight:600;font-size:13.5px;}
+  .jobcard .bici{color:var(--steel-500);font-size:12px;}
+  .jobcard .desc{font-size:12.5px;color:var(--steel-300);margin-top:6px;}
+  .jobcard .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:11.5px;color:var(--steel-500);}
+  .badge{padding:2px 8px;border-radius:20px;font-size:10.5px;font-weight:600;letter-spacing:.3px;}
+  .badge.pendiente{background:#3a2a16;color:#f0a94e;}
+  .badge.progreso{background:#173045;color:#5fb4e8;}
+  .badge.listo{background:#173a26;color:#5fd68f;}
+  .badge.entregado{background:#241d3a;color:#b79bf0;}
+  .empty{color:var(--steel-700);font-size:12.5px;text-align:center;padding:30px 10px;}
+
+  /* ---------- modal ---------- */
+  .overlay{position:fixed;inset:0;background:rgba(4,8,14,.65);display:none;align-items:flex-start;justify-content:center;padding:30px 16px;z-index:50;overflow-y:auto;}
+  .overlay.show{display:flex;}
+  .modal{background:var(--navy-900);border:1px solid var(--navy-700);border-radius:14px;width:100%;max-width:560px;padding:24px;box-shadow:var(--shadow);}
+  .modal h3{margin:0 0 16px;font-size:18px;}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+  @media (max-width:520px){.form-row{grid-template-columns:1fr;}}
+  .field2 label{display:block;font-size:12px;color:var(--steel-300);margin-bottom:5px;}
+  .field2 input,.field2 select,.field2 textarea{
+    width:100%;padding:9px 10px;border-radius:7px;border:1px solid var(--navy-700);
+    background:var(--navy-950);color:var(--cream-50);font-size:13.5px;outline:none;
+  }
+  .field2 input:focus,.field2 select:focus,.field2 textarea:focus{border-color:var(--orange-500);}
+  .field2 textarea{resize:vertical;min-height:56px;}
+  .modal-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+  .parts-picker{border:1px solid var(--navy-700);border-radius:8px;max-height:180px;overflow-y:auto;}
+  .part-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--navy-800);font-size:12.5px;}
+  .part-row:last-child{border-bottom:none;}
+  .part-row .pname{flex:1;}
+  .part-row .pstock{color:var(--steel-500);width:70px;}
+  .part-row input[type=number]{width:56px;padding:5px 6px;}
+
+  /* ---------- presupuesto ---------- */
+  .quote-table{width:100%;border-collapse:collapse;font-size:13px;}
+  .quote-table th{text-align:left;color:var(--steel-500);font-weight:500;font-size:11.5px;padding:6px 8px;border-bottom:1px solid var(--navy-700);}
+  .quote-table td{padding:7px 8px;border-bottom:1px solid var(--navy-800);}
+  .quote-table input,.quote-table select{background:var(--navy-950);border:1px solid var(--navy-700);border-radius:6px;color:var(--cream-50);padding:6px 8px;font-size:13px;width:100%;}
+  .quote-total{display:flex;justify-content:flex-end;gap:16px;align-items:baseline;margin-top:14px;font-size:14px;}
+  .quote-total .num{font-family:'Oswald';font-size:22px;color:var(--orange-400);}
+  .quotes-saved{margin-top:26px;}
+  .qcard{background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;}
+
+  /* ---------- stock ---------- */
+  .stock-table{width:100%;border-collapse:collapse;font-size:13.5px;}
+  .stock-table th{text-align:left;color:var(--steel-500);font-weight:500;font-size:11.5px;padding:8px;border-bottom:1px solid var(--navy-700);}
+  .stock-table td{padding:9px 8px;border-bottom:1px solid var(--navy-800);}
+  .stock-table tr.low td{color:#ff8a8a;}
+  .stock-table tr.low .qtybadge{background:var(--red-100);color:#ff8a8a;border:1px solid var(--red-500);}
+  .qtybadge{padding:2px 9px;border-radius:20px;font-weight:600;font-size:12px;background:var(--navy-800);}
+  .stat-strip{display:flex;gap:14px;margin-bottom:18px;flex-wrap:wrap;}
+  .stat-box{background:var(--navy-900);border:1px solid var(--navy-700);border-radius:10px;padding:14px 18px;min-width:130px;}
+  .stat-num{font-size:24px;color:var(--orange-400);}
+  .stat-label{font-size:11.5px;color:var(--steel-500);margin-top:2px;}
+
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .search-input{padding:9px 12px;border-radius:8px;border:1px solid var(--navy-700);background:var(--navy-950);color:var(--cream-50);font-size:13px;width:220px;}
+
+  /* ---------- buscador global ---------- */
+  .search-results{display:flex;flex-direction:column;gap:8px;max-height:60vh;overflow-y:auto;margin-top:14px;}
+  .search-result{background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:10px 12px;}
+  .search-result:hover{border-color:var(--orange-500);}
+  .search-result .sr-top{display:flex;justify-content:space-between;gap:8px;font-size:13.5px;font-weight:600;}
+  .search-result .sr-meta{color:var(--steel-500);font-size:11.5px;margin-top:4px;}
+
+  /* ---------- badge de contador en nav ---------- */
+  .navbtn{position:relative;}
+  .navcount{margin-left:auto;background:var(--orange-500);color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:20px;}
+
+  /* ---------- listos para entregar ---------- */
+  .ready-card{background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;}
+  .ready-card .info{font-size:13px;}
+  .ready-card .info .cliente{font-weight:600;}
+  .ready-card .info .bici{color:var(--steel-500);font-size:12px;}
+  .ready-card .days{font-size:11px;color:var(--orange-400);margin-top:3px;}
+
+  /* ---------- sync cloud ---------- */
+  .sync-box textarea{width:100%;min-height:80px;padding:9px 10px;border-radius:7px;border:1px solid var(--navy-700);background:var(--navy-950);color:var(--cream-50);font-size:12px;font-family:monospace;outline:none;}
+  .sync-status-line{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-top:10px;color:var(--steel-300);}
+
+  /* mobile */
+  .mobile-tabs{display:none;}
+  @media (max-width:760px){
+    .shell{flex-direction:column;}
+    .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:10px 12px;align-items:center;border-right:none;border-bottom:1px solid var(--navy-700);}
+    .sidebar .brandmini{display:none;}
+    .sidebar-foot{display:none;}
+    .navbtn{flex:none;white-space:nowrap;}
+    .main{padding:18px 16px;}
+    .cal-cell{font-size:11px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="medal"><img src="icon-192.png" alt="BIKE MPV"></div>
+    <h1 class="brand">BIKE MPV <span>- Mecánica</span></h1>
+    <div class="subbrand" id="login-subtitle">MECÁNICA DE BICICLETAS · INGRESÁ TUS DATOS</div>
+
+    <div id="login-form">
+      <div class="field"><label>Usuario</label><input id="li-user" autocomplete="username" placeholder="ej: taller_mpv"></div>
+      <div class="field"><label>Contraseña</label><input id="li-pass" type="password" autocomplete="current-password" placeholder="••••••••"></div>
+      <button class="btn-primary" id="btn-login">Ingresar</button>
+      <div class="login-msg" id="login-msg"></div>
+    </div>
+
+    <div id="setup-form" style="display:none;">
+      <div class="field"><label>Elegí un usuario</label><input id="su-user" placeholder="ej: taller_mpv"></div>
+      <div class="field"><label>Elegí una contraseña</label><input id="su-pass" type="password" placeholder="mínimo 4 caracteres"></div>
+      <div class="field"><label>Repetí la contraseña</label><input id="su-pass2" type="password"></div>
+      <button class="btn-primary" id="btn-setup">Crear acceso</button>
+      <div class="login-msg" id="setup-msg"></div>
+    </div>
+
+    <div class="hint">Este usuario y contraseña abren la app en cualquier dispositivo donde inicies sesión en Claude con esta misma cuenta. No es un sistema de seguridad bancaria: es un acceso simple para tu taller.</div>
+  </div>
+</div>
+
+<!-- ===================== APP ===================== -->
+<div id="app">
+  <div class="shell">
+    <div class="sidebar">
+      <div class="brandmini">
+        <div class="medal"><img src="icon-192.png" alt="BIKE MPV"></div>
+        <div class="txt">BIKE MPV<span>MECÁNICA</span></div>
+      </div>
+      <button class="navbtn" id="btn-open-search"><span class="ic">🔍</span> Buscar</button>
+      <button class="navbtn active" data-page="calendario"><span class="ic">📅</span> Calendario</button>
+      <button class="navbtn" data-page="listos"><span class="ic">📦</span> Listos <span class="navcount" id="listos-navcount" style="display:none;"></span></button>
+      <button class="navbtn" data-page="presupuesto"><span class="ic">🧾</span> Presupuesto</button>
+      <button class="navbtn" data-page="stock"><span class="ic">🔧</span> Stock</button>
+      <button class="navbtn" data-page="ajustes"><span class="ic">⚙️</span> Ajustes</button>
+      <div class="sidebar-foot">
+        <div class="sync-line"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">Sincronizado</span></div>
+        <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
+      </div>
+    </div>
+
+    <div class="main">
+
+      <!-- ---- CALENDARIO ---- -->
+      <div class="page" id="page-calendario">
+        <h1 class="page-title">Calendario de trabajos</h1>
+        <p class="page-sub">Elegí un día para ver lo que entra, lo que sale y lo que le presupuestaste a cada cliente.</p>
+        <div class="cal-wrap">
+          <div class="card">
+            <div class="cal-head">
+              <h2 id="cal-month-label"></h2>
+              <div class="cal-nav">
+                <button class="btn small" id="cal-prev">‹</button>
+                <button class="btn small" id="cal-today">Hoy</button>
+                <button class="btn small" id="cal-next">›</button>
+              </div>
+            </div>
+            <div class="cal-grid" id="cal-dow-row"></div>
+            <div class="cal-grid" id="cal-grid" style="margin-top:6px;"></div>
+          </div>
+          <div class="card daypanel">
+            <h3 id="day-title">—</h3>
+            <div class="daysub" id="day-sub"></div>
+            <button class="btn orange" style="width:100%;margin-bottom:14px;" id="btn-new-job">+ Nuevo trabajo este día</button>
+            <div class="joblist" id="day-joblist"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ---- LISTOS PARA ENTREGAR ---- -->
+      <div class="page" id="page-listos" style="display:none;">
+        <h1 class="page-title">Listos para entregar</h1>
+        <p class="page-sub">Bicis terminadas que todavía no retiró el cliente, sin importar la fecha.</p>
+        <div class="card">
+          <div id="ready-list"></div>
+        </div>
+      </div>
+
+      <!-- ---- PRESUPUESTO ---- -->
+      <div class="page" id="page-presupuesto" style="display:none;">
+        <h1 class="page-title">Generador de presupuesto</h1>
+        <p class="page-sub">Cargá repuestos, mano de obra y tarifas. El total se calcula solo.</p>
+        <div class="card">
+          <div class="form-row">
+            <div class="field2"><label>Cliente (opcional)</label><input id="q-cliente" placeholder="Nombre del cliente"></div>
+            <div class="field2"><label>Bici / referencia</label><input id="q-bici" placeholder="ej: MTB rodado 29"></div>
+          </div>
+          <div class="form-row">
+            <div class="field2"><label>Teléfono (opcional, para WhatsApp)</label><input id="q-telefono" placeholder="ej: 5491122334455"></div>
+          </div>
+          <table class="quote-table" id="quote-table">
+            <thead><tr><th style="width:110px;">Tipo</th><th>Descripción</th><th style="width:70px;">Cant.</th><th style="width:100px;">Precio unit.</th><th style="width:100px;">Subtotal</th><th style="width:30px;"></th></tr></thead>
+            <tbody id="quote-rows"></tbody>
+          </table>
+          <button class="btn ghost small" id="btn-add-row" style="margin-top:10px;">+ Agregar ítem</button>
+          <div class="quote-total"><span>Total</span><span class="num" id="quote-total-num">$0</span></div>
+          <div class="modal-actions" style="margin-top:16px;">
+            <button class="btn" id="btn-quote-clear">Vaciar</button>
+            <button class="btn orange" id="btn-quote-save">Guardar presupuesto</button>
+          </div>
+        </div>
+
+        <div class="quotes-saved">
+          <h3 style="font-size:15px;color:var(--steel-300);">Presupuestos guardados</h3>
+          <div id="saved-quotes-list"></div>
+        </div>
+      </div>
+
+      <!-- ---- STOCK ---- -->
+      <div class="page" id="page-stock" style="display:none;">
+        <h1 class="page-title">Control de stock</h1>
+        <p class="page-sub">Los repuestos se descuentan solos cuando los asignás a un trabajo. En rojo, lo que se está por acabar.</p>
+        <div class="stat-strip">
+          <div class="stat-box"><div class="stat-num" id="stat-total-parts">0</div><div class="stat-label">Ítems en stock</div></div>
+          <div class="stat-box"><div class="stat-num" id="stat-low-parts">0</div><div class="stat-label">Con stock bajo</div></div>
+        </div>
+        <div class="topbar">
+          <input class="search-input" id="stock-search" placeholder="Buscar repuesto...">
+          <button class="btn orange" id="btn-new-part">+ Nuevo repuesto</button>
+        </div>
+        <div class="card" style="padding:0;overflow-x:auto;">
+          <table class="stock-table">
+            <thead><tr><th>Repuesto</th><th>Categoría</th><th>Cantidad</th><th>Precio</th><th></th></tr></thead>
+            <tbody id="stock-rows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ---- AJUSTES ---- -->
+      <div class="page" id="page-ajustes" style="display:none;">
+        <h1 class="page-title">Ajustes</h1>
+        <p class="page-sub">Datos de acceso del taller.</p>
+        <div class="card" style="max-width:420px;">
+          <div class="field2" style="margin-bottom:12px;"><label>Usuario actual</label><input id="set-user-display" disabled></div>
+          <div class="field2" style="margin-bottom:12px;"><label>Nueva contraseña</label><input id="set-newpass" type="password" placeholder="dejar vacío para no cambiar"></div>
+          <button class="btn orange" id="btn-change-pass">Guardar cambios</button>
+          <div class="login-msg" id="settings-msg"></div>
+        </div>
+
+        <div class="card sync-box" style="max-width:420px;margin-top:18px;">
+          <h3 style="margin:0 0 6px;font-size:15px;">Sincronización en la nube (opcional)</h3>
+          <p class="page-sub" style="margin:0 0 12px;">Conectá un proyecto de Firebase gratuito para ver los mismos trabajos en el celular y la PC en tiempo real. <a href="#" id="link-firebase-help" style="color:var(--orange-400);">¿Cómo lo creo?</a></p>
+          <div id="firebase-help" style="display:none;font-size:12px;color:var(--steel-300);background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:10px;margin-bottom:12px;line-height:1.6;">
+            1. Andá a console.firebase.google.com y creá un proyecto gratis.<br>
+            2. Adentro, click en el ícono web (&lt;/&gt;) para "agregar app" y registrala.<br>
+            3. Copiá el objeto <code>firebaseConfig</code> que te muestra y pegalo abajo.<br>
+            4. En el menú del proyecto, andá a "Firestore Database" → "Crear base de datos" → modo producción, cualquier región.<br>
+            5. En Firestore → pestaña "Reglas", pegá esto y publicá (alcanza para uso simple de un taller):<br>
+            <code>allow read, write: if true;</code>
+          </div>
+          <div class="field2" style="margin-bottom:10px;">
+            <label>Configuración de Firebase (pegar el objeto firebaseConfig)</label>
+            <textarea id="firebase-config-input" placeholder='{"apiKey":"...","projectId":"...","...":"..."}'></textarea>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <button class="btn orange" id="btn-firebase-connect">Conectar</button>
+            <button class="btn danger" id="btn-firebase-disconnect" style="display:none;">Desconectar</button>
+          </div>
+          <div class="sync-status-line"><span class="sync-dot" id="firebase-dot" style="background:var(--steel-500);"></span><span id="firebase-status-text">No conectado</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: BUSCADOR GLOBAL ===================== -->
+<div class="overlay" id="search-overlay">
+  <div class="modal">
+    <h3>Buscar trabajo</h3>
+    <input class="search-input" id="search-input" style="width:100%;margin-bottom:6px;" placeholder="Cliente, bici o descripción...">
+    <div class="search-results" id="search-results"></div>
+    <div class="modal-actions">
+      <button class="btn" id="btn-search-close">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: NUEVO/EDITAR TRABAJO ===================== -->
+<div class="overlay" id="job-overlay">
+  <div class="modal">
+    <h3 id="job-modal-title">Nuevo trabajo</h3>
+    <div class="form-row">
+      <div class="field2"><label>Cliente</label><input id="j-cliente" placeholder="Nombre y apellido"></div>
+      <div class="field2"><label>Teléfono</label><input id="j-telefono" placeholder="opcional"></div>
+    </div>
+    <div class="form-row">
+      <div class="field2"><label>Bici (marca / modelo)</label><input id="j-bici" placeholder="ej: Trek Marlin 5"></div>
+      <div class="field2"><label>Estado</label>
+        <select id="j-estado">
+          <option value="pendiente">Pendiente</option>
+          <option value="progreso">En progreso</option>
+          <option value="listo">Listo</option>
+          <option value="entregado">Entregado</option>
+        </select>
+      </div>
+    </div>
+    <div class="field2" style="margin-bottom:12px;"><label>Descripción del trabajo / qué se entregó a reparar</label><textarea id="j-desc" placeholder="ej: cambio de cadena, ajuste de frenos, service de suspensión..."></textarea></div>
+    <div class="form-row">
+      <div class="field2"><label>Fecha de ingreso</label><input type="date" id="j-fecha-in"></div>
+      <div class="field2"><label>Fecha estimada de entrega</label><input type="date" id="j-fecha-out"></div>
+    </div>
+    <div class="field2" style="margin-bottom:12px;"><label>Presupuesto ($)</label><input type="number" id="j-presupuesto" placeholder="0"></div>
+
+    <div class="field2" style="margin-bottom:6px;"><label>Repuestos usados (descuenta del stock al guardar)</label></div>
+    <div class="parts-picker" id="job-parts-picker"></div>
+
+    <div class="modal-actions">
+      <button class="btn" id="btn-job-cancel">Cancelar</button>
+      <button class="btn danger" id="btn-job-delete" style="display:none;">Eliminar</button>
+      <button class="btn orange" id="btn-job-save">Guardar trabajo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: NUEVO/EDITAR REPUESTO ===================== -->
+<div class="overlay" id="part-overlay">
+  <div class="modal">
+    <h3 id="part-modal-title">Nuevo repuesto</h3>
+    <div class="form-row">
+      <div class="field2"><label>Nombre</label><input id="p-nombre" placeholder="ej: Cadena Shimano 9v"></div>
+      <div class="field2"><label>Categoría</label><input id="p-categoria" placeholder="ej: Transmisión"></div>
+    </div>
+    <div class="form-row">
+      <div class="field2"><label>Cantidad en stock</label><input type="number" id="p-cantidad" placeholder="0"></div>
+      <div class="field2"><label>Precio unitario ($)</label><input type="number" id="p-precio" placeholder="0"></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="btn-part-cancel">Cancelar</button>
+      <button class="btn danger" id="btn-part-delete" style="display:none;">Eliminar</button>
+      <button class="btn orange" id="btn-part-save">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   BIKE MPV - Mecánica
+   Persistencia local (localStorage) en este dispositivo/navegador.
+   Cada dispositivo donde instales la app tiene sus propios datos,
+   salvo que conectes un backend propio.
+   ============================================================ */
+
+let dbApi = null;
+let fbDb = null;
+let fbUnsubState = null;
+let fbUnsubAuth = null;
+const LOCAL_KEY = "bikempv_state_v1";
+const SESSION_KEY = "bikempv_session_v1";
+const FB_CONFIG_KEY = "bikempv_firebase_config_v1";
+
+let state = { jobs: [], parts: [], quotes: [] };
+let auth = null; // {username, password}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function money(n){ n = Number(n)||0; return "$" + n.toLocaleString('es-AR',{maximumFractionDigits:0}); }
+function todayISO(){ const d=new Date(); return d.toISOString().slice(0,10); }
+
+/* ---------------- persistence ---------------- */
+function loadLocal(){
+  try{ const raw = localStorage.getItem(LOCAL_KEY); if(raw) state = JSON.parse(raw); }catch(e){}
+}
+function saveLocal(){
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify(state)); }catch(e){}
+}
+function loadLocalAuth(){
+  try{ const raw = localStorage.getItem("bikempv_auth_v1"); if(raw) auth = JSON.parse(raw); }catch(e){}
+}
+function saveLocalAuth(){
+  try{ localStorage.setItem("bikempv_auth_v1", JSON.stringify(auth)); }catch(e){}
+}
+
+async function initDb(){
+  try{
+    if(typeof claude !== "undefined" && claude.use){
+      dbApi = await claude.use("db");
+    }
+  }catch(e){ dbApi = null; }
+  if(dbApi){
+    try{
+      const authDoc = await dbApi.doc("shop/auth").get();
+      if(authDoc && authDoc.data) auth = authDoc.data;
+    }catch(e){}
+    try{
+      const stateDoc = await dbApi.doc("shop/state").get();
+      if(stateDoc && stateDoc.data) state = stateDoc.data;
+    }catch(e){}
+    try{
+      dbApi.doc("shop/state").onSnapshot((doc)=>{
+        if(doc && doc.data){ state = doc.data; saveLocal(); if(document.getElementById('app').style.display!=='none') renderAll(); }
+      });
+    }catch(e){}
+  }
+  const savedFb = localStorage.getItem(FB_CONFIG_KEY);
+  if(savedFb){
+    try{ await connectFirebase(JSON.parse(savedFb)); }catch(e){}
+  }
+  updateSyncIndicator();
+}
+
+async function persistState(){
+  saveLocal();
+  if(dbApi){
+    try{ await dbApi.doc("shop/state").set(state); }catch(e){}
+  }
+  if(fbDb){
+    try{ await fbDb.collection("bikempv").doc("state").set(state); }catch(e){}
+  }
+}
+async function persistAuth(){
+  saveLocalAuth();
+  if(dbApi){
+    try{ await dbApi.doc("shop/auth").set(auth); }catch(e){}
+  }
+  if(fbDb){
+    try{ await fbDb.collection("bikempv").doc("auth").set(auth); }catch(e){}
+  }
+}
+
+/* ---------------- sincronización con Firebase (opcional) ---------------- */
+function updateSyncIndicator(){
+  const dot = document.getElementById('sync-dot');
+  const txt = document.getElementById('sync-text');
+  if(fbDb){ dot.style.background = "#3f8f5f"; txt.textContent = "Sincronizado en la nube"; }
+  else if(dbApi){ dot.style.background = "#3f8f5f"; txt.textContent = "Sincronizado entre dispositivos"; }
+  else { dot.style.background = "#8b98a8"; txt.textContent = "Guardado en este dispositivo"; }
+}
+function loadFirebaseScripts(){
+  if(window.firebase && window.firebase.firestore) return Promise.resolve();
+  const urls = [
+    "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"
+  ];
+  return urls.reduce((p, url)=> p.then(()=> new Promise((resolve, reject)=>{
+    const s = document.createElement('script');
+    s.src = url; s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  })), Promise.resolve());
+}
+async function connectFirebase(config){
+  await loadFirebaseScripts();
+  if(!window.firebase.apps || !window.firebase.apps.length){
+    window.firebase.initializeApp(config);
+  }
+  fbDb = window.firebase.firestore();
+  if(fbUnsubState) fbUnsubState();
+  if(fbUnsubAuth) fbUnsubAuth();
+  const stateSnap = await fbDb.collection("bikempv").doc("state").get();
+  if(stateSnap.exists) state = stateSnap.data(); else await fbDb.collection("bikempv").doc("state").set(state);
+  const authSnap = await fbDb.collection("bikempv").doc("auth").get();
+  if(authSnap.exists) auth = authSnap.data();
+  else if(auth) await fbDb.collection("bikempv").doc("auth").set(auth);
+  fbUnsubState = fbDb.collection("bikempv").doc("state").onSnapshot(doc=>{
+    if(doc.exists){ state = doc.data(); saveLocal(); if(document.getElementById('app').style.display!=='none') renderAll(); }
+  });
+  fbUnsubAuth = fbDb.collection("bikempv").doc("auth").onSnapshot(doc=>{
+    if(doc.exists) auth = doc.data();
+  });
+  saveLocal();
+  updateSyncIndicator();
+}
+function disconnectFirebase(){
+  if(fbUnsubState) fbUnsubState();
+  if(fbUnsubAuth) fbUnsubAuth();
+  fbDb = null;
+  localStorage.removeItem(FB_CONFIG_KEY);
+  updateSyncIndicator();
+}
+function initSettingsSyncUI(){
+  const saved = localStorage.getItem(FB_CONFIG_KEY);
+  const input = document.getElementById('firebase-config-input');
+  const btnConnect = document.getElementById('btn-firebase-connect');
+  const btnDisconnect = document.getElementById('btn-firebase-disconnect');
+  const statusTxt = document.getElementById('firebase-status-text');
+  const statusDot = document.getElementById('firebase-dot');
+  if(saved){ input.value = saved; }
+  function refresh(){
+    if(fbDb){
+      statusTxt.textContent = "Conectado — sincronizando en la nube";
+      statusDot.style.background = "#3f8f5f";
+      btnDisconnect.style.display = 'inline-block';
+    } else {
+      statusTxt.textContent = "No conectado";
+      statusDot.style.background = "#8b98a8";
+      btnDisconnect.style.display = 'none';
+    }
+  }
+  refresh();
+  document.getElementById('link-firebase-help').addEventListener('click', (e)=>{
+    e.preventDefault();
+    const el = document.getElementById('firebase-help');
+    el.style.display = el.style.display==='none' ? 'block' : 'none';
+  });
+  btnConnect.addEventListener('click', async ()=>{
+    let cfg;
+    try{ cfg = JSON.parse(input.value.trim()); }
+    catch(e){ alert('El texto pegado no es un JSON válido. Copiá el objeto firebaseConfig completo.'); return; }
+    btnConnect.textContent = 'Conectando...';
+    try{
+      await connectFirebase(cfg);
+      localStorage.setItem(FB_CONFIG_KEY, JSON.stringify(cfg));
+      refresh();
+      alert('Conectado. Este dispositivo ya sincroniza en la nube.');
+    }catch(e){
+      alert('No se pudo conectar. Revisá que el objeto firebaseConfig sea correcto y que Firestore esté creado.');
+    }
+    btnConnect.textContent = 'Conectar';
+  });
+  btnDisconnect.addEventListener('click', ()=>{
+    disconnectFirebase();
+    input.value = '';
+    refresh();
+  });
+}
+
+/* ---------------- login flow ---------------- */
+async function boot(){
+  loadLocal();
+  loadLocalAuth();
+  await initDb();
+
+  const hasAuth = !!(auth && auth.username);
+  document.getElementById('login-form').style.display = hasAuth ? 'block' : 'none';
+  document.getElementById('setup-form').style.display = hasAuth ? 'none' : 'block';
+  document.getElementById('login-subtitle').textContent = hasAuth
+    ? 'MECÁNICA DE BICICLETAS · INICIÁ SESIÓN'
+    : 'MECÁNICA DE BICICLETAS · CREÁ EL ACCESO DEL TALLER';
+
+  try{
+    const sess = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if(sess && auth && sess.username === auth.username){
+      enterApp();
+    }
+  }catch(e){}
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', ()=>{
+      navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    });
+  }
+}
+
+document.getElementById('btn-setup').addEventListener('click', async ()=>{
+  const u = document.getElementById('su-user').value.trim();
+  const p = document.getElementById('su-pass').value;
+  const p2 = document.getElementById('su-pass2').value;
+  const msg = document.getElementById('setup-msg');
+  if(u.length < 3){ msg.textContent = "El usuario debe tener al menos 3 caracteres."; msg.className="login-msg err"; return; }
+  if(p.length < 4){ msg.textContent = "La contraseña debe tener al menos 4 caracteres."; msg.className="login-msg err"; return; }
+  if(p !== p2){ msg.textContent = "Las contraseñas no coinciden."; msg.className="login-msg err"; return; }
+  auth = { username: u, password: p };
+  await persistAuth();
+  localStorage.setItem(SESSION_KEY, JSON.stringify({username:u}));
+  msg.textContent = "Acceso creado."; msg.className="login-msg ok";
+  setTimeout(enterApp, 300);
+});
+
+document.getElementById('btn-login').addEventListener('click', ()=>{
+  const u = document.getElementById('li-user').value.trim();
+  const p = document.getElementById('li-pass').value;
+  const msg = document.getElementById('login-msg');
+  if(auth && u === auth.username && p === auth.password){
+    localStorage.setItem(SESSION_KEY, JSON.stringify({username:u}));
+    msg.textContent = ""; enterApp();
+  } else {
+    msg.textContent = "Usuario o contraseña incorrectos."; msg.className="login-msg err";
+  }
+});
+
+document.getElementById('btn-logout').addEventListener('click', ()=>{
+  localStorage.removeItem(SESSION_KEY);
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('li-user').value=''; document.getElementById('li-pass').value='';
+});
+
+function enterApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('set-user-display').value = auth ? auth.username : '';
+  initSettingsSyncUI();
+  updateSyncIndicator();
+  renderAll();
+}
+
+/* ---------------- navigation ---------------- */
+document.querySelectorAll('.navbtn').forEach(btn=>{
+  if(!btn.dataset.page) return;
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+    document.getElementById('page-'+btn.dataset.page).style.display='block';
+    if(btn.dataset.page==='stock') renderStock();
+    if(btn.dataset.page==='presupuesto') renderSavedQuotes();
+    if(btn.dataset.page==='calendario') renderCalendar();
+    if(btn.dataset.page==='listos') renderListos();
+  });
+});
+
+/* ---------------- buscador global ---------------- */
+document.getElementById('btn-open-search').addEventListener('click', ()=>{
+  document.getElementById('search-input').value = '';
+  renderSearchResults('');
+  document.getElementById('search-overlay').classList.add('show');
+  setTimeout(()=> document.getElementById('search-input').focus(), 50);
+});
+document.getElementById('btn-search-close').addEventListener('click', ()=>{
+  document.getElementById('search-overlay').classList.remove('show');
+});
+document.getElementById('search-input').addEventListener('input', (e)=>{
+  renderSearchResults(e.target.value);
+});
+function renderSearchResults(q){
+  q = q.trim().toLowerCase();
+  const wrap = document.getElementById('search-results');
+  if(!q){ wrap.innerHTML = '<div class="empty">Escribí para buscar por cliente, bici o descripción.</div>'; return; }
+  const results = state.jobs.filter(j=>
+    (j.cliente||'').toLowerCase().includes(q) ||
+    (j.bici||'').toLowerCase().includes(q) ||
+    (j.descripcion||'').toLowerCase().includes(q)
+  );
+  if(results.length===0){ wrap.innerHTML = '<div class="empty">Sin resultados.</div>'; return; }
+  wrap.innerHTML = results.map(j=>`
+    <div class="search-result" data-id="${j.id}">
+      <div class="sr-top"><span>${esc(j.cliente||'Sin nombre')}</span><span class="badge ${j.estado}">${estadoLabel(j.estado)}</span></div>
+      <div class="sr-meta">${esc(j.bici||'')} · ingreso ${j.fechaIngreso||'—'} · entrega ${j.fechaEntrega||'—'}</div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.search-result').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      document.getElementById('search-overlay').classList.remove('show');
+      openJobModal(el.dataset.id);
+    });
+  });
+}
+
+/* ---------------- listos para entregar ---------------- */
+function renderListos(){
+  const ready = state.jobs.filter(j=>j.estado==='listo').sort((a,b)=>(a.fechaEntrega||'').localeCompare(b.fechaEntrega||''));
+  const wrap = document.getElementById('ready-list');
+  if(ready.length===0){ wrap.innerHTML = '<div class="empty">No hay bicis listas esperando retiro.</div>'; }
+  else {
+    wrap.innerHTML = ready.map(j=>{
+      const days = daysSince(j.fechaEntrega);
+      return `<div class="ready-card" data-id="${j.id}">
+        <div class="info">
+          <div class="cliente">${esc(j.cliente||'Sin nombre')}</div>
+          <div class="bici">${esc(j.bici||'')}</div>
+          <div class="days">${days}</div>
+        </div>
+        <button class="btn small orange mark-delivered" data-id="${j.id}">Marcar entregado</button>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('.mark-delivered').forEach(b=>{
+      b.addEventListener('click', async (e)=>{
+        e.stopPropagation();
+        const job = state.jobs.find(j=>j.id===b.dataset.id);
+        if(job){ job.estado = 'entregado'; await persistState(); renderListos(); renderCalendar(); updateListosBadge(); }
+      });
+    });
+    wrap.querySelectorAll('.ready-card').forEach(el=>{
+      el.addEventListener('click', ()=>openJobModal(el.dataset.id));
+    });
+  }
+  updateListosBadge();
+}
+function daysSince(iso){
+  if(!iso) return '';
+  const d = new Date(iso+'T00:00:00');
+  const diff = Math.floor((new Date(todayISO()+'T00:00:00') - d) / 86400000);
+  if(diff <= 0) return 'Estimado para hoy';
+  if(diff === 1) return 'Esperando desde hace 1 día';
+  return `Esperando desde hace ${diff} días`;
+}
+function updateListosBadge(){
+  const n = state.jobs.filter(j=>j.estado==='listo').length;
+  const badge = document.getElementById('listos-navcount');
+  if(n>0){ badge.style.display='inline-block'; badge.textContent = n; } else { badge.style.display='none'; }
+}
+
+/* ---------------- calendar ---------------- */
+let calCursor = new Date(); calCursor.setDate(1);
+let selectedDate = todayISO();
+const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const MONTHS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+function pad(n){ return n<10 ? '0'+n : ''+n; }
+function isoOf(y,m,d){ return `${y}-${pad(m+1)}-${pad(d)}`; }
+
+function renderCalendar(){
+  document.getElementById('cal-dow-row').innerHTML = DOW.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  const y = calCursor.getFullYear(), m = calCursor.getMonth();
+  document.getElementById('cal-month-label').textContent = `${MONTHS[m]} ${y}`;
+  const firstDow = new Date(y,m,1).getDay();
+  const daysInMonth = new Date(y,m+1,0).getDate();
+  const daysInPrev = new Date(y,m,0).getDate();
+  const cells = [];
+  for(let i=firstDow-1;i>=0;i--) cells.push({d:daysInPrev-i, other:true, iso:isoOf(y,m-1<0?11:m-1, daysInPrev-i)});
+  for(let d=1; d<=daysInMonth; d++) cells.push({d, other:false, iso:isoOf(y,m,d)});
+  while(cells.length % 7 !== 0) { const idx = cells.length - (firstDow+daysInMonth); cells.push({d: idx+1, other:true, iso:isoOf(y,m+1>11?0:m+1, idx+1)}); }
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+  const todayIso = todayISO();
+  cells.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'cal-cell' + (c.other?' other':'') + (c.iso===todayIso?' today':'') + (c.iso===selectedDate?' selected':'');
+    const hasIn = state.jobs.some(j=>j.fechaIngreso===c.iso);
+    const hasDue = state.jobs.some(j=>j.fechaEntrega===c.iso);
+    div.innerHTML = `<div>${c.d}</div><div class="dots">${hasIn?'<span class="dot in"></span>':''}${hasDue?'<span class="dot due"></span>':''}</div>`;
+    div.addEventListener('click', ()=>{ selectedDate = c.iso; renderCalendar(); renderDayPanel(); });
+    grid.appendChild(div);
+  });
+  renderDayPanel();
+}
+
+function renderDayPanel(){
+  const d = new Date(selectedDate+'T00:00:00');
+  const label = d.toLocaleDateString('es-AR',{weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('day-title').textContent = label.charAt(0).toUpperCase()+label.slice(1);
+  const ins = state.jobs.filter(j=>j.fechaIngreso===selectedDate);
+  const outs = state.jobs.filter(j=>j.fechaEntrega===selectedDate && j.fechaEntrega!==j.fechaIngreso);
+  document.getElementById('day-sub').textContent = `${ins.length} ingreso(s) · ${outs.length} entrega(s) estimada(s)`;
+
+  const all = [...ins.map(j=>({...j, tag:'Ingresa hoy'})), ...outs.map(j=>({...j, tag:'Entrega estimada'}))];
+  const list = document.getElementById('day-joblist');
+  if(all.length===0){ list.innerHTML = '<div class="empty">Nada agendado para este día.</div>'; return; }
+  list.innerHTML = all.map(j=>`
+    <div class="jobcard" data-id="${j.id}">
+      <div class="top">
+        <div><div class="cliente">${esc(j.cliente||'Sin nombre')}</div><div class="bici">${esc(j.bici||'')}</div></div>
+        <span class="badge ${j.estado}">${estadoLabel(j.estado)}</span>
+      </div>
+      <div class="desc">${esc(j.descripcion||'')}</div>
+      <div class="meta"><span>${j.tag}</span><span>${money(j.presupuesto)}</span></div>
+    </div>
+  `).join('');
+  list.querySelectorAll('.jobcard').forEach(el=>{
+    el.addEventListener('click', ()=>openJobModal(el.dataset.id));
+  });
+}
+function estadoLabel(e){ return {pendiente:'Pendiente',progreso:'En progreso',listo:'Listo',entregado:'Entregado'}[e] || e; }
+function esc(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+document.getElementById('cal-prev').addEventListener('click', ()=>{ calCursor.setMonth(calCursor.getMonth()-1); renderCalendar(); });
+document.getElementById('cal-next').addEventListener('click', ()=>{ calCursor.setMonth(calCursor.getMonth()+1); renderCalendar(); });
+document.getElementById('cal-today').addEventListener('click', ()=>{ calCursor = new Date(); calCursor.setDate(1); selectedDate = todayISO(); renderCalendar(); });
+document.getElementById('btn-new-job').addEventListener('click', ()=>openJobModal(null));
+
+/* ---------------- job modal ---------------- */
+let editingJobId = null;
+let jobPartsSelection = {};
+
+function openJobModal(jobId){
+  editingJobId = jobId;
+  const job = jobId ? state.jobs.find(j=>j.id===jobId) : null;
+  document.getElementById('job-modal-title').textContent = job ? 'Editar trabajo' : 'Nuevo trabajo';
+  document.getElementById('j-cliente').value = job?.cliente || '';
+  document.getElementById('j-telefono').value = job?.telefono || '';
+  document.getElementById('j-bici').value = job?.bici || '';
+  document.getElementById('j-estado').value = job?.estado || 'pendiente';
+  document.getElementById('j-desc').value = job?.descripcion || '';
+  document.getElementById('j-fecha-in').value = job?.fechaIngreso || selectedDate;
+  document.getElementById('j-fecha-out').value = job?.fechaEntrega || selectedDate;
+  document.getElementById('j-presupuesto').value = job?.presupuesto || '';
+  document.getElementById('btn-job-delete').style.display = job ? 'inline-block' : 'none';
+
+  jobPartsSelection = {};
+  if(job && job.partsUsed) job.partsUsed.forEach(pu=> jobPartsSelection[pu.partId] = pu.qty);
+  renderJobPartsPicker();
+
+  document.getElementById('job-overlay').classList.add('show');
+}
+function renderJobPartsPicker(){
+  const wrap = document.getElementById('job-parts-picker');
+  if(state.parts.length===0){ wrap.innerHTML = '<div class="empty" style="padding:14px;">No cargaste repuestos aún. Andá a la sección Stock.</div>'; return; }
+  wrap.innerHTML = state.parts.map(p=>{
+    const sel = jobPartsSelection[p.id] || 0;
+    const low = p.cantidad<=2;
+    return `<div class="part-row">
+      <span class="pname">${esc(p.nombre)}</span>
+      <span class="pstock" style="${low?'color:#ff8a8a':''}">stock: ${p.cantidad}</span>
+      <input type="number" min="0" max="${p.cantidad + sel}" value="${sel}" data-part="${p.id}" class="part-qty-input">
+    </div>`;
+  }).join('');
+  wrap.querySelectorAll('.part-qty-input').forEach(inp=>{
+    inp.addEventListener('change', ()=>{
+      const v = Math.max(0, parseInt(inp.value)||0);
+      jobPartsSelection[inp.dataset.part] = v;
+    });
+  });
+}
+document.getElementById('btn-job-cancel').addEventListener('click', ()=> document.getElementById('job-overlay').classList.remove('show'));
+
+document.getElementById('btn-job-save').addEventListener('click', async ()=>{
+  const cliente = document.getElementById('j-cliente').value.trim();
+  if(!cliente){ alert('Ingresá el nombre del cliente.'); return; }
+
+  const prevJob = editingJobId ? state.jobs.find(j=>j.id===editingJobId) : null;
+  const prevParts = prevJob && prevJob.partsUsed ? prevJob.partsUsed : [];
+
+  prevParts.forEach(pu=>{
+    const part = state.parts.find(p=>p.id===pu.partId);
+    if(part) part.cantidad += pu.qty;
+  });
+
+  const newPartsUsed = Object.entries(jobPartsSelection).filter(([id,qty])=>qty>0).map(([id,qty])=>({partId:id, qty}));
+  newPartsUsed.forEach(pu=>{
+    const part = state.parts.find(p=>p.id===pu.partId);
+    if(part) part.cantidad = Math.max(0, part.cantidad - pu.qty);
+  });
+
+  const jobData = {
+    id: editingJobId || uid(),
+    cliente,
+    telefono: document.getElementById('j-telefono').value.trim(),
+    bici: document.getElementById('j-bici').value.trim(),
+    estado: document.getElementById('j-estado').value,
+    descripcion: document.getElementById('j-desc').value.trim(),
+    fechaIngreso: document.getElementById('j-fecha-in').value || selectedDate,
+    fechaEntrega: document.getElementById('j-fecha-out').value || selectedDate,
+    presupuesto: Number(document.getElementById('j-presupuesto').value)||0,
+    partsUsed: newPartsUsed
+  };
+
+  if(editingJobId){
+    const idx = state.jobs.findIndex(j=>j.id===editingJobId);
+    state.jobs[idx] = jobData;
+  } else {
+    state.jobs.push(jobData);
+  }
+  await persistState();
+  document.getElementById('job-overlay').classList.remove('show');
+  renderCalendar(); renderStock(); updateListosBadge();
+});
+
+document.getElementById('btn-job-delete').addEventListener('click', async ()=>{
+  if(!editingJobId) return;
+  if(!confirm('¿Eliminar este trabajo? Los repuestos usados volverán al stock.')) return;
+  const job = state.jobs.find(j=>j.id===editingJobId);
+  if(job && job.partsUsed) job.partsUsed.forEach(pu=>{
+    const part = state.parts.find(p=>p.id===pu.partId);
+    if(part) part.cantidad += pu.qty;
+  });
+  state.jobs = state.jobs.filter(j=>j.id!==editingJobId);
+  await persistState();
+  document.getElementById('job-overlay').classList.remove('show');
+  renderCalendar(); renderStock(); updateListosBadge();
+});
+
+/* ---------------- stock ---------------- */
+function renderStock(){
+  const q = (document.getElementById('stock-search').value||'').toLowerCase();
+  const rows = document.getElementById('stock-rows');
+  const filtered = state.parts.filter(p=> p.nombre.toLowerCase().includes(q) || (p.categoria||'').toLowerCase().includes(q));
+  document.getElementById('stat-total-parts').textContent = state.parts.length;
+  document.getElementById('stat-low-parts').textContent = state.parts.filter(p=>p.cantidad<=2).length;
+
+  if(filtered.length===0){ rows.innerHTML = `<tr><td colspan="5" class="empty">No hay repuestos cargados.</td></tr>`; return; }
+  rows.innerHTML = filtered.map(p=>{
+    const low = p.cantidad<=2;
+    return `<tr class="${low?'low':''}" data-id="${p.id}">
+      <td>${esc(p.nombre)}</td>
+      <td>${esc(p.categoria||'—')}</td>
+      <td><span class="qtybadge">${p.cantidad}</span></td>
+      <td>${money(p.precio)}</td>
+      <td><button class="btn small edit-part" data-id="${p.id}">Editar</button></td>
+    </tr>`;
+  }).join('');
+  rows.querySelectorAll('.edit-part').forEach(b=> b.addEventListener('click', ()=>openPartModal(b.dataset.id)));
+}
+document.getElementById('stock-search').addEventListener('input', renderStock);
+document.getElementById('btn-new-part').addEventListener('click', ()=>openPartModal(null));
+
+let editingPartId = null;
+function openPartModal(id){
+  editingPartId = id;
+  const part = id ? state.parts.find(p=>p.id===id) : null;
+  document.getElementById('part-modal-title').textContent = part ? 'Editar repuesto' : 'Nuevo repuesto';
+  document.getElementById('p-nombre').value = part?.nombre || '';
+  document.getElementById('p-categoria').value = part?.categoria || '';
+  document.getElementById('p-cantidad').value = part?.cantidad ?? '';
+  document.getElementById('p-precio').value = part?.precio ?? '';
+  document.getElementById('btn-part-delete').style.display = part ? 'inline-block' : 'none';
+  document.getElementById('part-overlay').classList.add('show');
+}
+document.getElementById('btn-part-cancel').addEventListener('click', ()=>document.getElementById('part-overlay').classList.remove('show'));
+document.getElementById('btn-part-save').addEventListener('click', async ()=>{
+  const nombre = document.getElementById('p-nombre').value.trim();
+  if(!nombre){ alert('Ingresá el nombre del repuesto.'); return; }
+  const data = {
+    id: editingPartId || uid(),
+    nombre,
+    categoria: document.getElementById('p-categoria').value.trim(),
+    cantidad: Math.max(0, parseInt(document.getElementById('p-cantidad').value)||0),
+    precio: Number(document.getElementById('p-precio').value)||0
+  };
+  if(editingPartId){
+    const idx = state.parts.findIndex(p=>p.id===editingPartId);
+    state.parts[idx] = data;
+  } else {
+    state.parts.push(data);
+  }
+  await persistState();
+  document.getElementById('part-overlay').classList.remove('show');
+  renderStock();
+});
+document.getElementById('btn-part-delete').addEventListener('click', async ()=>{
+  if(!editingPartId) return;
+  if(!confirm('¿Eliminar este repuesto del stock?')) return;
+  state.parts = state.parts.filter(p=>p.id!==editingPartId);
+  await persistState();
+  document.getElementById('part-overlay').classList.remove('show');
+  renderStock();
+});
+
+/* ---------------- presupuesto ---------------- */
+let quoteRows = [];
+function newQuoteRow(){ return { id: uid(), tipo:'repuesto', desc:'', cant:1, precio:0 }; }
+function renderQuoteRows(){
+  const tbody = document.getElementById('quote-rows');
+  if(quoteRows.length===0) quoteRows.push(newQuoteRow());
+  tbody.innerHTML = quoteRows.map(r=>`
+    <tr data-id="${r.id}">
+      <td><select class="q-tipo">
+        <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
+        <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
+      </select></td>
+      <td><input class="q-desc" value="${esc(r.desc)}" placeholder="descripción"></td>
+      <td><input class="q-cant" type="number" min="1" value="${r.cant}"></td>
+      <td><input class="q-precio" type="number" min="0" value="${r.precio}"></td>
+      <td>${money(r.cant*r.precio)}</td>
+      <td><button class="btn small danger q-del">✕</button></td>
+    </tr>
+  `).join('');
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const row = quoteRows.find(r=>r.id===id);
+    tr.querySelector('.q-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; });
+    tr.querySelector('.q-desc').addEventListener('input', e=>{ row.desc=e.target.value; });
+    tr.querySelector('.q-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
+    tr.querySelector('.q-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
+    tr.querySelector('.q-del').addEventListener('click', ()=>{ quoteRows = quoteRows.filter(r=>r.id!==id); renderQuoteRows(); updateQuoteTotal(); });
+  });
+  updateQuoteTotal();
+}
+function updateQuoteTotal(){
+  const total = quoteRows.reduce((s,r)=>s+(r.cant*r.precio),0);
+  document.getElementById('quote-total-num').textContent = money(total);
+}
+document.getElementById('btn-add-row').addEventListener('click', ()=>{ quoteRows.push(newQuoteRow()); renderQuoteRows(); });
+document.getElementById('btn-quote-clear').addEventListener('click', ()=>{
+  quoteRows = [newQuoteRow()];
+  document.getElementById('q-cliente').value=''; document.getElementById('q-bici').value=''; document.getElementById('q-telefono').value='';
+  renderQuoteRows();
+});
+document.getElementById('btn-quote-save').addEventListener('click', async ()=>{
+  const total = quoteRows.reduce((s,r)=>s+(r.cant*r.precio),0);
+  if(total<=0){ alert('Cargá al menos un ítem con precio.'); return; }
+  state.quotes.push({
+    id: uid(),
+    cliente: document.getElementById('q-cliente').value.trim(),
+    bici: document.getElementById('q-bici').value.trim(),
+    telefono: document.getElementById('q-telefono').value.trim(),
+    items: quoteRows.filter(r=>r.desc || r.precio),
+    total,
+    fecha: todayISO()
+  });
+  await persistState();
+  quoteRows = [newQuoteRow()];
+  document.getElementById('q-cliente').value=''; document.getElementById('q-bici').value=''; document.getElementById('q-telefono').value='';
+  renderQuoteRows();
+  renderSavedQuotes();
+});
+function renderSavedQuotes(){
+  const wrap = document.getElementById('saved-quotes-list');
+  if(state.quotes.length===0){ wrap.innerHTML = '<div class="empty">Todavía no guardaste presupuestos.</div>'; return; }
+  wrap.innerHTML = [...state.quotes].reverse().map(q=>`
+    <div class="qcard" data-id="${q.id}">
+      <div><strong>${esc(q.cliente||'Sin cliente')}</strong> · ${esc(q.bici||'')} <span style="color:var(--steel-500);">— ${q.fecha}</span></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="color:var(--orange-400);font-weight:600;">${money(q.total)}</span>
+        <button class="btn small pdf-quote" data-id="${q.id}">PDF</button>
+        ${q.telefono ? `<button class="btn small wa-quote" data-id="${q.id}">WhatsApp</button>` : ''}
+        <button class="btn small danger del-quote" data-id="${q.id}">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+  wrap.querySelectorAll('.del-quote').forEach(b=>{
+    b.addEventListener('click', async ()=>{
+      state.quotes = state.quotes.filter(q=>q.id!==b.dataset.id);
+      await persistState();
+      renderSavedQuotes();
+    });
+  });
+  wrap.querySelectorAll('.pdf-quote').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const q = state.quotes.find(x=>x.id===b.dataset.id);
+      if(q) exportQuotePDF(q);
+    });
+  });
+  wrap.querySelectorAll('.wa-quote').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const q = state.quotes.find(x=>x.id===b.dataset.id);
+      if(q) shareQuoteWhatsApp(q);
+    });
+  });
+}
+function quoteSummaryText(q){
+  let lines = [];
+  lines.push(`Presupuesto - BIKE MPV`);
+  if(q.cliente) lines.push(`Cliente: ${q.cliente}`);
+  if(q.bici) lines.push(`Bici: ${q.bici}`);
+  lines.push(`Fecha: ${q.fecha}`);
+  lines.push('');
+  q.items.forEach(it=>{
+    const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
+    lines.push(`${it.cant} x ${it.desc || tipo} - ${money(it.cant*it.precio)}`);
+  });
+  lines.push('');
+  lines.push(`TOTAL: ${money(q.total)}`);
+  return lines.join('\n');
+}
+function exportQuotePDF(q){
+  if(typeof window.jspdf === 'undefined'){ alert('No se pudo cargar el generador de PDF. Revisá tu conexión a internet.'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  doc.setFontSize(16); doc.text('BIKE MPV - Presupuesto', 14, y); y+=10;
+  doc.setFontSize(11);
+  if(q.cliente){ doc.text(`Cliente: ${q.cliente}`, 14, y); y+=7; }
+  if(q.bici){ doc.text(`Bici: ${q.bici}`, 14, y); y+=7; }
+  doc.text(`Fecha: ${q.fecha}`, 14, y); y+=10;
+  doc.setFontSize(10);
+  doc.text('Cant.', 14, y); doc.text('Descripción', 34, y); doc.text('Subtotal', 170, y); y+=4;
+  doc.line(14, y, 196, y); y+=6;
+  q.items.forEach(it=>{
+    const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
+    doc.text(String(it.cant), 14, y);
+    doc.text((it.desc || tipo).slice(0,60), 34, y);
+    doc.text(money(it.cant*it.precio), 170, y);
+    y+=7;
+    if(y>270){ doc.addPage(); y=20; }
+  });
+  y+=4; doc.line(14, y, 196, y); y+=10;
+  doc.setFontSize(13); doc.text(`Total: ${money(q.total)}`, 140, y);
+  doc.save(`presupuesto_${(q.cliente||'cliente').replace(/\s+/g,'_')}.pdf`);
+}
+function shareQuoteWhatsApp(q){
+  const text = encodeURIComponent(quoteSummaryText(q));
+  const phone = (q.telefono||'').replace(/[^0-9]/g,'');
+  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
+  window.open(url, '_blank');
+}
+
+/* ---------------- ajustes ---------------- */
+document.getElementById('btn-change-pass').addEventListener('click', async ()=>{
+  const newpass = document.getElementById('set-newpass').value;
+  const msg = document.getElementById('settings-msg');
+  if(!newpass){ msg.textContent='No se hizo ningún cambio.'; msg.className='login-msg'; return; }
+  if(newpass.length<4){ msg.textContent='La contraseña debe tener al menos 4 caracteres.'; msg.className='login-msg err'; return; }
+  auth.password = newpass;
+  await persistAuth();
+  document.getElementById('set-newpass').value='';
+  msg.textContent='Contraseña actualizada.'; msg.className='login-msg ok';
+});
+
+/* ---------------- init ---------------- */
+function renderAll(){
+  renderCalendar();
+  renderStock();
+  quoteRows = [newQuoteRow()];
+  renderQuoteRows();
+  renderSavedQuotes();
+  updateListosBadge();
+}
+
+boot();
+</script>
+</body>
+</html>
