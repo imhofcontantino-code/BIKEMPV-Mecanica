@@ -165,7 +165,14 @@
   .badge.pendiente{background:#3a2a16;color:#f0a94e;}
   .badge.progreso{background:#173045;color:#5fb4e8;}
   .badge.listo{background:#173a26;color:#5fd68f;}
+  .badge.abierto{background:#3a2a16;color:#f0a94e;}
+  .badge.cerrado{background:#173a26;color:#5fd68f;}
   .badge.entregado{background:#241d3a;color:#b79bf0;}
+  .qcard{flex-direction:column;align-items:stretch;gap:8px;}
+  .qcard .qtop{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+  .qcard .qactions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .qcard .opt-line{font-size:12px;color:var(--steel-500);}
+  .qcard .opt-line strong{color:var(--orange-400);}
   .empty{color:var(--steel-700);font-size:12.5px;text-align:center;padding:30px 10px;}
 
   /* ---------- modal ---------- */
@@ -355,7 +362,7 @@
           <div class="quote-total"><span>Total</span><span class="num" id="quote-total-num">$0</span></div>
           <div class="modal-actions" style="margin-top:16px;">
             <button class="btn" id="btn-quote-clear">Vaciar</button>
-            <button class="btn orange" id="btn-quote-save">Guardar presupuesto</button>
+            <button class="btn orange" id="btn-quote-save"><span id="btn-quote-save-label">Guardar presupuesto</span></button>
           </div>
         </div>
 
@@ -419,6 +426,24 @@
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- ===================== MODAL: OPCIONALES DEL PRESUPUESTO ===================== -->
+<div class="overlay" id="optional-overlay">
+  <div class="modal">
+    <h3>Servicios / repuestos opcionales</h3>
+    <p class="page-sub" style="margin:0 0 12px;">Se muestran aparte del total ya cerrado, como propuesta extra para el cliente.</p>
+    <table class="quote-table" id="optional-table">
+      <thead><tr><th style="width:110px;">Tipo</th><th>Descripción</th><th style="width:70px;">Cant.</th><th style="width:100px;">Precio unit.</th><th style="width:100px;">Subtotal</th><th style="width:30px;"></th></tr></thead>
+      <tbody id="optional-rows"></tbody>
+    </table>
+    <button class="btn ghost small" id="btn-add-optional-row" style="margin-top:10px;">+ Agregar ítem</button>
+    <div class="quote-total"><span>Subtotal opcional</span><span class="num" id="optional-total-num">$0</span></div>
+    <div class="modal-actions">
+      <button class="btn" id="btn-optional-cancel">Cancelar</button>
+      <button class="btn orange" id="btn-optional-save">Guardar opcionales</button>
     </div>
   </div>
 </div>
@@ -1076,6 +1101,7 @@ document.getElementById('btn-part-delete').addEventListener('click', async ()=>{
 
 /* ---------------- presupuesto ---------------- */
 let quoteRows = [];
+let editingQuoteId = null;
 function newQuoteRow(){ return { id: uid(), tipo:'repuesto', desc:'', cant:1, precio:0 }; }
 function renderQuoteRows(){
   const tbody = document.getElementById('quote-rows');
@@ -1109,50 +1135,92 @@ function updateQuoteTotal(){
   document.getElementById('quote-total-num').textContent = money(total);
 }
 document.getElementById('btn-add-row').addEventListener('click', ()=>{ quoteRows.push(newQuoteRow()); renderQuoteRows(); });
-document.getElementById('btn-quote-clear').addEventListener('click', ()=>{
+function resetQuoteForm(){
+  editingQuoteId = null;
   quoteRows = [newQuoteRow()];
   document.getElementById('q-cliente').value=''; document.getElementById('q-bici').value=''; document.getElementById('q-telefono').value='';
+  document.getElementById('btn-quote-save-label').textContent = 'Guardar presupuesto';
   renderQuoteRows();
-});
+}
+document.getElementById('btn-quote-clear').addEventListener('click', resetQuoteForm);
 document.getElementById('btn-quote-save').addEventListener('click', async ()=>{
   const total = quoteRows.reduce((s,r)=>s+(r.cant*r.precio),0);
   if(total<=0){ alert('Cargá al menos un ítem con precio.'); return; }
-  state.quotes.push({
-    id: uid(),
-    cliente: document.getElementById('q-cliente').value.trim(),
-    bici: document.getElementById('q-bici').value.trim(),
-    telefono: document.getElementById('q-telefono').value.trim(),
-    items: quoteRows.filter(r=>r.desc || r.precio),
-    total,
-    fecha: todayISO()
-  });
+  const cliente = document.getElementById('q-cliente').value.trim();
+  const bici = document.getElementById('q-bici').value.trim();
+  const telefono = document.getElementById('q-telefono').value.trim();
+  const items = quoteRows.filter(r=>r.desc || r.precio);
+
+  if(editingQuoteId){
+    const q = state.quotes.find(x=>x.id===editingQuoteId);
+    if(q){ q.cliente=cliente; q.bici=bici; q.telefono=telefono; q.items=items; q.total=total; }
+  } else {
+    state.quotes.push({
+      id: uid(), cliente, bici, telefono, items, total,
+      fecha: todayISO(), estado: 'abierto', opcionales: []
+    });
+  }
   await persistState();
-  quoteRows = [newQuoteRow()];
-  document.getElementById('q-cliente').value=''; document.getElementById('q-bici').value=''; document.getElementById('q-telefono').value='';
-  renderQuoteRows();
+  resetQuoteForm();
   renderSavedQuotes();
 });
+function editQuote(id){
+  const q = state.quotes.find(x=>x.id===id);
+  if(!q) return;
+  editingQuoteId = id;
+  document.getElementById('q-cliente').value = q.cliente || '';
+  document.getElementById('q-bici').value = q.bici || '';
+  document.getElementById('q-telefono').value = q.telefono || '';
+  quoteRows = (q.items && q.items.length ? q.items : [newQuoteRow()]).map(it=>({ id: uid(), tipo: it.tipo||'repuesto', desc: it.desc||'', cant: it.cant||1, precio: it.precio||0 }));
+  document.getElementById('btn-quote-save-label').textContent = 'Actualizar presupuesto';
+  renderQuoteRows();
+  document.querySelector('#page-presupuesto .card').scrollIntoView({behavior:'smooth'});
+}
+async function toggleQuoteEstado(id, estado){
+  const q = state.quotes.find(x=>x.id===id);
+  if(!q) return;
+  q.estado = estado;
+  if(!q.opcionales) q.opcionales = [];
+  await persistState();
+  renderSavedQuotes();
+}
 function renderSavedQuotes(){
   const wrap = document.getElementById('saved-quotes-list');
   if(state.quotes.length===0){ wrap.innerHTML = '<div class="empty">Todavía no guardaste presupuestos.</div>'; return; }
-  wrap.innerHTML = [...state.quotes].reverse().map(q=>`
+  wrap.innerHTML = [...state.quotes].reverse().map(q=>{
+    const estado = q.estado || 'abierto';
+    const opcionales = q.opcionales || [];
+    const opcTotal = opcionales.reduce((s,r)=>s+(r.cant*r.precio),0);
+    return `
     <div class="qcard" data-id="${q.id}">
-      <div><strong>${esc(q.cliente||'Sin cliente')}</strong> · ${esc(q.bici||'')} <span style="color:var(--steel-500);">— ${q.fecha}</span></div>
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div class="qtop">
+        <div><strong>${esc(q.cliente||'Sin cliente')}</strong> · ${esc(q.bici||'')} <span style="color:var(--steel-500);">— ${q.fecha}</span></div>
+        <span class="badge ${estado}">${estado==='cerrado' ? 'Cerrado' : 'Abierto'}</span>
+      </div>
+      ${opcTotal>0 ? `<div class="opt-line">+ opcionales sugeridos: <strong>${money(opcTotal)}</strong> (${opcionales.length} ítem${opcionales.length>1?'s':''})</div>` : ''}
+      <div class="qactions">
         <span style="color:var(--orange-400);font-weight:600;">${money(q.total)}</span>
+        ${estado==='cerrado'
+          ? `<button class="btn small optional-quote" data-id="${q.id}">+ Opcional</button><button class="btn small reopen-quote" data-id="${q.id}">Reabrir</button>`
+          : `<button class="btn small edit-quote" data-id="${q.id}">Editar</button><button class="btn small close-quote" data-id="${q.id}">Cerrar</button>`}
         <button class="btn small pdf-quote" data-id="${q.id}">PDF</button>
         ${q.telefono ? `<button class="btn small wa-quote" data-id="${q.id}">WhatsApp</button>` : ''}
         <button class="btn small danger del-quote" data-id="${q.id}">Eliminar</button>
       </div>
     </div>
-  `).join('');
+  `;}).join('');
   wrap.querySelectorAll('.del-quote').forEach(b=>{
     b.addEventListener('click', async ()=>{
+      if(!confirm('¿Eliminar este presupuesto?')) return;
       state.quotes = state.quotes.filter(q=>q.id!==b.dataset.id);
       await persistState();
       renderSavedQuotes();
     });
   });
+  wrap.querySelectorAll('.edit-quote').forEach(b=> b.addEventListener('click', ()=> editQuote(b.dataset.id)));
+  wrap.querySelectorAll('.close-quote').forEach(b=> b.addEventListener('click', ()=> toggleQuoteEstado(b.dataset.id, 'cerrado')));
+  wrap.querySelectorAll('.reopen-quote').forEach(b=> b.addEventListener('click', ()=> toggleQuoteEstado(b.dataset.id, 'abierto')));
+  wrap.querySelectorAll('.optional-quote').forEach(b=> b.addEventListener('click', ()=> openOptionalModal(b.dataset.id)));
   wrap.querySelectorAll('.pdf-quote').forEach(b=>{
     b.addEventListener('click', ()=>{
       const q = state.quotes.find(x=>x.id===b.dataset.id);
@@ -1166,6 +1234,63 @@ function renderSavedQuotes(){
     });
   });
 }
+
+/* ---------------- opcionales del presupuesto ---------------- */
+let editingOptionalQuoteId = null;
+let optionalRows = [];
+function newOptionalRow(){ return { id: uid(), tipo:'repuesto', desc:'', cant:1, precio:0 }; }
+function openOptionalModal(quoteId){
+  const q = state.quotes.find(x=>x.id===quoteId);
+  if(!q) return;
+  editingOptionalQuoteId = quoteId;
+  optionalRows = (q.opcionales && q.opcionales.length ? q.opcionales : [newOptionalRow()]).map(it=>({ id: uid(), tipo: it.tipo||'repuesto', desc: it.desc||'', cant: it.cant||1, precio: it.precio||0 }));
+  renderOptionalRows();
+  document.getElementById('optional-overlay').classList.add('show');
+}
+function renderOptionalRows(){
+  const tbody = document.getElementById('optional-rows');
+  if(optionalRows.length===0) optionalRows.push(newOptionalRow());
+  tbody.innerHTML = optionalRows.map(r=>`
+    <tr data-id="${r.id}">
+      <td><select class="o-tipo">
+        <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
+        <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
+      </select></td>
+      <td><input class="o-desc" value="${esc(r.desc)}" placeholder="descripción"></td>
+      <td><input class="o-cant" type="number" min="1" value="${r.cant}"></td>
+      <td><input class="o-precio" type="number" min="0" value="${r.precio}"></td>
+      <td>${money(r.cant*r.precio)}</td>
+      <td><button class="btn small danger o-del">✕</button></td>
+    </tr>
+  `).join('');
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const row = optionalRows.find(r=>r.id===id);
+    tr.querySelector('.o-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; });
+    tr.querySelector('.o-desc').addEventListener('input', e=>{ row.desc=e.target.value; });
+    tr.querySelector('.o-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
+    tr.querySelector('.o-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
+    tr.querySelector('.o-del').addEventListener('click', ()=>{ optionalRows = optionalRows.filter(r=>r.id!==id); renderOptionalRows(); updateOptionalTotal(); });
+  });
+  updateOptionalTotal();
+}
+function updateOptionalTotal(){
+  const total = optionalRows.reduce((s,r)=>s+(r.cant*r.precio),0);
+  document.getElementById('optional-total-num').textContent = money(total);
+}
+document.getElementById('btn-add-optional-row').addEventListener('click', ()=>{ optionalRows.push(newOptionalRow()); renderOptionalRows(); });
+document.getElementById('btn-optional-cancel').addEventListener('click', ()=>{
+  document.getElementById('optional-overlay').classList.remove('show');
+});
+document.getElementById('btn-optional-save').addEventListener('click', async ()=>{
+  const q = state.quotes.find(x=>x.id===editingOptionalQuoteId);
+  if(!q) return;
+  q.opcionales = optionalRows.filter(r=>r.desc || r.precio);
+  await persistState();
+  document.getElementById('optional-overlay').classList.remove('show');
+  renderSavedQuotes();
+});
+
 function quoteSummaryText(q){
   let lines = [];
   lines.push(`Presupuesto - BIKE MPV`);
@@ -1179,6 +1304,17 @@ function quoteSummaryText(q){
   });
   lines.push('');
   lines.push(`TOTAL: ${money(q.total)}`);
+  const opcionales = q.opcionales || [];
+  if(opcionales.length){
+    lines.push('');
+    lines.push('Opcional (a confirmar):');
+    opcionales.forEach(it=>{
+      const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
+      lines.push(`${it.cant} x ${it.desc || tipo} - ${money(it.cant*it.precio)}`);
+    });
+    const opcTotal = opcionales.reduce((s,r)=>s+(r.cant*r.precio),0);
+    lines.push(`Subtotal opcional: ${money(opcTotal)}`);
+  }
   return lines.join('\n');
 }
 function exportQuotePDF(q){
@@ -1203,7 +1339,23 @@ function exportQuotePDF(q){
     if(y>270){ doc.addPage(); y=20; }
   });
   y+=4; doc.line(14, y, 196, y); y+=10;
-  doc.setFontSize(13); doc.text(`Total: ${money(q.total)}`, 140, y);
+  doc.setFontSize(13); doc.text(`Total: ${money(q.total)}`, 140, y); y+=10;
+
+  const opcionales = q.opcionales || [];
+  if(opcionales.length){
+    doc.setFontSize(12); doc.text('Opcional (a confirmar con el cliente):', 14, y); y+=8;
+    doc.setFontSize(10);
+    opcionales.forEach(it=>{
+      const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
+      doc.text(String(it.cant), 14, y);
+      doc.text((it.desc || tipo).slice(0,60), 34, y);
+      doc.text(money(it.cant*it.precio), 170, y);
+      y+=7;
+      if(y>270){ doc.addPage(); y=20; }
+    });
+    const opcTotal = opcionales.reduce((s,r)=>s+(r.cant*r.precio),0);
+    y+=3; doc.setFontSize(11); doc.text(`Subtotal opcional: ${money(opcTotal)}`, 140, y);
+  }
   doc.save(`presupuesto_${(q.cliente||'cliente').replace(/\s+/g,'_')}.pdf`);
 }
 function shareQuoteWhatsApp(q){
