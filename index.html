@@ -627,6 +627,7 @@ async function connectFirebase(config){
     window.firebase.initializeApp(config);
   }
   fbDb = window.firebase.firestore();
+  try{ fbDb.settings({ experimentalForceLongPolling: true, merge: true }); }catch(e){}
   if(fbUnsubState) fbUnsubState();
   if(fbUnsubAuth) fbUnsubAuth();
   const stateSnap = await fbDb.collection("bikempv").doc("state").get();
