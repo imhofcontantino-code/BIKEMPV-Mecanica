@@ -617,7 +617,7 @@ function loadFirebaseScripts(){
   ];
   return urls.reduce((p, url)=> p.then(()=> new Promise((resolve, reject)=>{
     const s = document.createElement('script');
-    s.src = url; s.onload = resolve; s.onerror = reject;
+    s.src = url; s.onload = resolve; s.onerror = ()=> reject(new Error('No se pudo cargar el script: ' + url));
     document.head.appendChild(s);
   })), Promise.resolve());
 }
@@ -686,7 +686,8 @@ function initSettingsSyncUI(){
       refresh();
       alert('Conectado. Este dispositivo ya sincroniza en la nube.');
     }catch(e){
-      alert('No se pudo conectar. Revisá que el objeto firebaseConfig sea correcto y que Firestore esté creado.');
+      console.error('Firebase connect error:', e);
+      alert('No se pudo conectar. Detalle del error: ' + (e && e.message ? e.message : String(e)));
     }
     btnConnect.textContent = 'Conectar';
   });
