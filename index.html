@@ -649,7 +649,32 @@ async function fsSet(projectId, path, obj){
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ fields: toFirestoreFields(obj || {}) })
   });
-  if(!res.ok) throw new Error('No se pudo escribir en Firestore (código ' + res.status + ').');
+  if(res.ok) return;
+  if(res.status === 404){
+    // El documento todavía no existe: lo creamos explícitamente con POST.
+    const parts = path.split('/');
+    const docId = parts.pop();
+    const collectionPath = parts.join('/');
+    const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${collectionPath}?documentId=${encodeURIComponent(docId)}`;
+    const createRes = await fetch(createUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: toFirestoreFields(obj || {}) })
+    });
+    if(createRes.ok) return;
+    if(createRes.status === 409){
+      // Ya existe (se creó entre medio): reintentamos el PATCH una vez.
+      const retryRes = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: toFirestoreFields(obj || {}) })
+      });
+      if(retryRes.ok) return;
+      throw new Error('No se pudo escribir en Firestore (código ' + retryRes.status + ').');
+    }
+    throw new Error('No se pudo crear el documento en Firestore (código ' + createRes.status + ').');
+  }
+  throw new Error('No se pudo escribir en Firestore (código ' + res.status + ').');
 }
 function updateSyncIndicator(){
   const dot = document.getElementById('sync-dot');
