@@ -258,6 +258,7 @@
 </style>
 </head>
 <body>
+<datalist id="parts-datalist"></datalist>
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login-screen">
@@ -386,7 +387,7 @@
         </div>
         <div class="card" style="padding:0;overflow-x:auto;">
           <table class="stock-table">
-            <thead><tr><th>Repuesto</th><th>Categoría</th><th>Cantidad</th><th>Precio</th><th></th></tr></thead>
+            <thead><tr><th>Repuesto</th><th>Categoría</th><th>Cantidad</th><th>Costo</th><th>Bonificado</th><th>Final</th><th></th></tr></thead>
             <tbody id="stock-rows"></tbody>
           </table>
         </div>
@@ -507,7 +508,11 @@
     </div>
     <div class="form-row">
       <div class="field2"><label>Cantidad en stock</label><input type="number" id="p-cantidad" placeholder="0"></div>
-      <div class="field2"><label>Precio unitario ($)</label><input type="number" id="p-precio" placeholder="0"></div>
+      <div class="field2"><label>Precio de costo ($)</label><input type="number" id="p-precio-costo" placeholder="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="field2"><label>Precio bonificado ($)</label><input type="number" id="p-precio-bonificado" placeholder="0"></div>
+      <div class="field2"><label>Precio final (al cliente) ($)</label><input type="number" id="p-precio-final" placeholder="0"></div>
     </div>
     <div class="modal-actions">
       <button class="btn" id="btn-part-cancel">Cancelar</button>
@@ -691,7 +696,7 @@ function startFirebasePolling(){
       const remoteState = await fsGet(fbProjectId, "bikempv/state");
       if(remoteState){ state = remoteState; saveLocal(); if(document.getElementById('app').style.display!=='none') renderAll(); }
       const remoteAuth = await fsGet(fbProjectId, "bikempv/auth");
-      if(remoteAuth) auth = remoteAuth;
+      if(remoteAuth){ auth = remoteAuth; saveLocalAuth(); }
     }catch(e){}
   }, 15000);
 }
@@ -707,7 +712,7 @@ async function connectFirebase(config){
   if(remoteState) state = remoteState;
   else await fsSet(projectId, "bikempv/state", state);
   const remoteAuth = await fsGet(projectId, "bikempv/auth");
-  if(remoteAuth) auth = remoteAuth;
+  if(remoteAuth){ auth = remoteAuth; saveLocalAuth(); }
   else if(auth) await fsSet(projectId, "bikempv/auth", auth);
   fbProjectId = projectId;
   saveLocal();
@@ -1105,6 +1110,17 @@ document.getElementById('btn-job-delete').addEventListener('click', async ()=>{
   renderCalendar(); renderStock(); updateListosBadge();
 });
 
+/* ---------------- autocompletado de repuestos ---------------- */
+function refreshPartsDatalist(){
+  const dl = document.getElementById('parts-datalist');
+  dl.innerHTML = state.parts.map(p=> `<option value="${esc(p.nombre)}">`).join('');
+}
+function findPartByName(name){
+  const n = (name||'').trim().toLowerCase();
+  if(!n) return null;
+  return state.parts.find(p=> p.nombre.trim().toLowerCase() === n) || null;
+}
+
 /* ---------------- stock ---------------- */
 function renderStock(){
   const q = (document.getElementById('stock-search').value||'').toLowerCase();
@@ -1113,14 +1129,16 @@ function renderStock(){
   document.getElementById('stat-total-parts').textContent = state.parts.length;
   document.getElementById('stat-low-parts').textContent = state.parts.filter(p=>p.cantidad<=2).length;
 
-  if(filtered.length===0){ rows.innerHTML = `<tr><td colspan="5" class="empty">No hay repuestos cargados.</td></tr>`; return; }
+  if(filtered.length===0){ rows.innerHTML = `<tr><td colspan="7" class="empty">No hay repuestos cargados.</td></tr>`; return; }
   rows.innerHTML = filtered.map(p=>{
     const low = p.cantidad<=2;
     return `<tr class="${low?'low':''}" data-id="${p.id}">
       <td>${esc(p.nombre)}</td>
       <td>${esc(p.categoria||'—')}</td>
       <td><span class="qtybadge">${p.cantidad}</span></td>
-      <td>${money(p.precio)}</td>
+      <td>${money(p.precioCosto)}</td>
+      <td>${money(p.precioBonificado)}</td>
+      <td style="color:var(--orange-400);font-weight:600;">${money(p.precioFinal)}</td>
       <td><button class="btn small edit-part" data-id="${p.id}">Editar</button></td>
     </tr>`;
   }).join('');
@@ -1137,7 +1155,9 @@ function openPartModal(id){
   document.getElementById('p-nombre').value = part?.nombre || '';
   document.getElementById('p-categoria').value = part?.categoria || '';
   document.getElementById('p-cantidad').value = part?.cantidad ?? '';
-  document.getElementById('p-precio').value = part?.precio ?? '';
+  document.getElementById('p-precio-costo').value = part?.precioCosto ?? '';
+  document.getElementById('p-precio-bonificado').value = part?.precioBonificado ?? '';
+  document.getElementById('p-precio-final').value = part?.precioFinal ?? '';
   document.getElementById('btn-part-delete').style.display = part ? 'inline-block' : 'none';
   document.getElementById('part-overlay').classList.add('show');
 }
@@ -1150,7 +1170,9 @@ document.getElementById('btn-part-save').addEventListener('click', async ()=>{
     nombre,
     categoria: document.getElementById('p-categoria').value.trim(),
     cantidad: Math.max(0, parseInt(document.getElementById('p-cantidad').value)||0),
-    precio: Number(document.getElementById('p-precio').value)||0
+    precioCosto: Number(document.getElementById('p-precio-costo').value)||0,
+    precioBonificado: Number(document.getElementById('p-precio-bonificado').value)||0,
+    precioFinal: Number(document.getElementById('p-precio-final').value)||0
   };
   if(editingPartId){
     const idx = state.parts.findIndex(p=>p.id===editingPartId);
@@ -1161,6 +1183,7 @@ document.getElementById('btn-part-save').addEventListener('click', async ()=>{
   await persistState();
   document.getElementById('part-overlay').classList.remove('show');
   renderStock();
+  refreshPartsDatalist();
 });
 document.getElementById('btn-part-delete').addEventListener('click', async ()=>{
   if(!editingPartId) return;
@@ -1169,6 +1192,7 @@ document.getElementById('btn-part-delete').addEventListener('click', async ()=>{
   await persistState();
   document.getElementById('part-overlay').classList.remove('show');
   renderStock();
+  refreshPartsDatalist();
 });
 
 /* ---------------- presupuesto ---------------- */
@@ -1184,7 +1208,7 @@ function renderQuoteRows(){
         <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
         <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
       </select></td>
-      <td><input class="q-desc" value="${esc(r.desc)}" placeholder="descripción"></td>
+      <td><input class="q-desc" value="${esc(r.desc)}" placeholder="descripción" ${r.tipo==='repuesto' ? 'list="parts-datalist"' : ''}></td>
       <td><input class="q-cant" type="number" min="1" value="${r.cant}"></td>
       <td><input class="q-precio" type="number" min="0" value="${r.precio}"></td>
       <td>${money(r.cant*r.precio)}</td>
@@ -1194,8 +1218,14 @@ function renderQuoteRows(){
   tbody.querySelectorAll('tr').forEach(tr=>{
     const id = tr.dataset.id;
     const row = quoteRows.find(r=>r.id===id);
-    tr.querySelector('.q-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; });
-    tr.querySelector('.q-desc').addEventListener('input', e=>{ row.desc=e.target.value; });
+    tr.querySelector('.q-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; renderQuoteRows(); });
+    tr.querySelector('.q-desc').addEventListener('input', e=>{
+      row.desc=e.target.value;
+      if(row.tipo==='repuesto'){
+        const match = findPartByName(row.desc);
+        if(match && !row.precio){ row.precio = match.precioFinal || 0; updateQuoteTotal(); renderQuoteRows(); }
+      }
+    });
     tr.querySelector('.q-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
     tr.querySelector('.q-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
     tr.querySelector('.q-del').addEventListener('click', ()=>{ quoteRows = quoteRows.filter(r=>r.id!==id); renderQuoteRows(); updateQuoteTotal(); });
@@ -1328,7 +1358,7 @@ function renderOptionalRows(){
         <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
         <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
       </select></td>
-      <td><input class="o-desc" value="${esc(r.desc)}" placeholder="descripción"></td>
+      <td><input class="o-desc" value="${esc(r.desc)}" placeholder="descripción" ${r.tipo==='repuesto' ? 'list="parts-datalist"' : ''}></td>
       <td><input class="o-cant" type="number" min="1" value="${r.cant}"></td>
       <td><input class="o-precio" type="number" min="0" value="${r.precio}"></td>
       <td>${money(r.cant*r.precio)}</td>
@@ -1338,8 +1368,14 @@ function renderOptionalRows(){
   tbody.querySelectorAll('tr').forEach(tr=>{
     const id = tr.dataset.id;
     const row = optionalRows.find(r=>r.id===id);
-    tr.querySelector('.o-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; });
-    tr.querySelector('.o-desc').addEventListener('input', e=>{ row.desc=e.target.value; });
+    tr.querySelector('.o-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; renderOptionalRows(); });
+    tr.querySelector('.o-desc').addEventListener('input', e=>{
+      row.desc=e.target.value;
+      if(row.tipo==='repuesto'){
+        const match = findPartByName(row.desc);
+        if(match && !row.precio){ row.precio = match.precioFinal || 0; updateOptionalTotal(); renderOptionalRows(); }
+      }
+    });
     tr.querySelector('.o-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
     tr.querySelector('.o-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
     tr.querySelector('.o-del').addEventListener('click', ()=>{ optionalRows = optionalRows.filter(r=>r.id!==id); renderOptionalRows(); updateOptionalTotal(); });
@@ -1453,6 +1489,7 @@ document.getElementById('btn-change-pass').addEventListener('click', async ()=>{
 function renderAll(){
   renderCalendar();
   renderStock();
+  refreshPartsDatalist();
   quoteRows = [newQuoteRow()];
   renderQuoteRows();
   renderSavedQuotes();
