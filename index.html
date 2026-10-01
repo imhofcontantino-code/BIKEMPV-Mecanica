@@ -207,6 +207,16 @@
   .quotes-saved{margin-top:26px;}
   .qcard{background:var(--navy-950);border:1px solid var(--navy-800);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px;}
 
+  /* ---------- autocompletado de repuestos ---------- */
+  #ac-box{position:fixed;display:none;z-index:200;background:var(--navy-900);border:1px solid var(--orange-500);border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,.55);max-height:260px;overflow-y:auto;}
+  .ac-item{padding:9px 11px;border-bottom:1px solid var(--navy-800);cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13px;}
+  .ac-item:last-child{border-bottom:none;}
+  .ac-item.active,.ac-item:hover{background:var(--navy-800);}
+  .ac-name{flex:1;min-width:0;color:var(--cream-50);}
+  .ac-name small{display:block;color:var(--steel-500);font-size:11px;margin-top:2px;}
+  .ac-name small.low{color:#ff8a8a;}
+  .ac-price{font-family:'Oswald';color:var(--orange-400);white-space:nowrap;font-size:14px;}
+
   /* ---------- stock ---------- */
   .stock-table{width:100%;border-collapse:collapse;font-size:13.5px;}
   .stock-table th{text-align:left;color:var(--steel-500);font-weight:500;font-size:11.5px;padding:8px;border-bottom:1px solid var(--navy-700);}
@@ -258,7 +268,6 @@
 </style>
 </head>
 <body>
-<datalist id="parts-datalist"></datalist>
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login-screen">
@@ -1111,9 +1120,91 @@ document.getElementById('btn-job-delete').addEventListener('click', async ()=>{
 });
 
 /* ---------------- autocompletado de repuestos ---------------- */
-function refreshPartsDatalist(){
-  const dl = document.getElementById('parts-datalist');
-  dl.innerHTML = state.parts.map(p=> `<option value="${esc(p.nombre)}">`).join('');
+function refreshPartsDatalist(){ /* ya no se usa datalist: el autocompletado lee state.parts en vivo */ }
+
+const acNorm = s => String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const acBox = document.createElement('div');
+acBox.id = 'ac-box';
+document.body.appendChild(acBox);
+let acInput = null, acItems = [], acIndex = -1, acOnPick = null;
+
+function acSearch(q){
+  const tokens = acNorm(q).split(/\s+/).filter(Boolean);
+  let list = state.parts.map(p=>({ p, name: acNorm(p.nombre), hay: acNorm(p.nombre+' '+(p.categoria||'')) }));
+  if(tokens.length) list = list.filter(x=> tokens.every(t=> x.hay.includes(t)));
+  const first = tokens[0] || '';
+  list.sort((a,b)=>{
+    const sa = a.name.startsWith(first) ? 0 : 1, sb = b.name.startsWith(first) ? 0 : 1;
+    return sa - sb || a.p.nombre.localeCompare(b.p.nombre, 'es');
+  });
+  return list.slice(0, 8).map(x=>x.p);
+}
+function acPosition(){
+  if(!acInput || acBox.style.display==='none') return;
+  const r = acInput.getBoundingClientRect();
+  const w = Math.max(r.width, 280);
+  const left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+  acBox.style.width = w + 'px';
+  acBox.style.left = left + 'px';
+  const spaceBelow = window.innerHeight - r.bottom, spaceAbove = r.top;
+  if(spaceBelow < 200 && spaceAbove > spaceBelow){
+    acBox.style.top = 'auto';
+    acBox.style.bottom = (window.innerHeight - r.top + 4) + 'px';
+    acBox.style.maxHeight = Math.min(260, spaceAbove - 12) + 'px';
+  } else {
+    acBox.style.bottom = 'auto';
+    acBox.style.top = (r.bottom + 4) + 'px';
+    acBox.style.maxHeight = Math.min(260, spaceBelow - 12) + 'px';
+  }
+}
+function acHide(){ acBox.style.display = 'none'; acInput = null; acItems = []; acIndex = -1; acOnPick = null; }
+function acRender(){
+  if(!acItems.length){ acBox.style.display = 'none'; return; }
+  acBox.innerHTML = acItems.map((p,i)=>`
+    <div class="ac-item${i===acIndex?' active':''}" data-i="${i}">
+      <div class="ac-name">${esc(p.nombre)}<small class="${p.cantidad<=0?'low':''}">${p.cantidad>0 ? 'stock: '+p.cantidad : 'sin stock'}${p.categoria ? ' · '+esc(p.categoria) : ''}</small></div>
+      <div class="ac-price">${money(p.precioFinal)}</div>
+    </div>`).join('');
+  acBox.style.display = 'block';
+  acPosition();
+  const act = acBox.querySelector('.ac-item.active');
+  if(act) act.scrollIntoView({block:'nearest'});
+}
+function acPick(i){
+  const part = acItems[i], cb = acOnPick;
+  acHide();
+  if(part && cb) cb(part);
+}
+acBox.addEventListener('pointerdown', e=>{
+  e.preventDefault(); // mantiene el foco en el input
+  const it = e.target.closest('.ac-item');
+  if(it) acPick(Number(it.dataset.i));
+});
+window.addEventListener('resize', acPosition);
+window.addEventListener('scroll', acPosition, true);
+
+/* Conecta un input de descripción con las sugerencias de stock.
+   getTipo(): devuelve el tipo de la fila (solo sugiere en 'repuesto').
+   onPick(part): se llama al elegir una sugerencia. Si no elegís ninguna, el texto queda libre. */
+function attachPartAutocomplete(input, getTipo, onPick){
+  input.setAttribute('autocomplete', 'off');
+  const open = ()=>{
+    if(getTipo() !== 'repuesto'){ acHide(); return; }
+    acInput = input; acOnPick = onPick;
+    acItems = acSearch(input.value);
+    acIndex = -1;
+    acRender();
+  };
+  input.addEventListener('input', open);
+  input.addEventListener('focus', open);
+  input.addEventListener('blur', ()=>{ if(acInput === input) acHide(); });
+  input.addEventListener('keydown', e=>{
+    if(acInput !== input || acBox.style.display === 'none') return;
+    if(e.key === 'ArrowDown'){ e.preventDefault(); acIndex = (acIndex + 1) % acItems.length; acRender(); }
+    else if(e.key === 'ArrowUp'){ e.preventDefault(); acIndex = (acIndex - 1 + acItems.length) % acItems.length; acRender(); }
+    else if(e.key === 'Enter' && acIndex >= 0){ e.preventDefault(); acPick(acIndex); }
+    else if(e.key === 'Escape' || e.key === 'Tab'){ acHide(); }
+  });
 }
 function findPartByName(name){
   const n = (name||'').trim().toLowerCase();
@@ -1208,10 +1299,10 @@ function renderQuoteRows(){
         <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
         <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
       </select></td>
-      <td><input class="q-desc" value="${esc(r.desc)}" placeholder="descripción" ${r.tipo==='repuesto' ? 'list="parts-datalist"' : ''}></td>
+      <td><input class="q-desc" value="${esc(r.desc)}" placeholder="descripción o repuesto del stock" autocomplete="off"></td>
       <td><input class="q-cant" type="number" min="1" value="${r.cant}"></td>
       <td><input class="q-precio" type="number" min="0" value="${r.precio}"></td>
-      <td>${money(r.cant*r.precio)}</td>
+      <td class="q-sub">${money(r.cant*r.precio)}</td>
       <td><button class="btn small danger q-del">✕</button></td>
     </tr>
   `).join('');
@@ -1219,15 +1310,24 @@ function renderQuoteRows(){
     const id = tr.dataset.id;
     const row = quoteRows.find(r=>r.id===id);
     tr.querySelector('.q-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; renderQuoteRows(); });
-    tr.querySelector('.q-desc').addEventListener('input', e=>{
-      row.desc=e.target.value;
+    const refreshSub = ()=>{ tr.querySelector('.q-sub').textContent = money(row.cant*row.precio); updateQuoteTotal(); };
+    const descInput = tr.querySelector('.q-desc');
+    descInput.addEventListener('input', e=>{
+      row.desc = e.target.value;
       if(row.tipo==='repuesto'){
         const match = findPartByName(row.desc);
-        if(match && !row.precio){ row.precio = match.precioFinal || 0; updateQuoteTotal(); renderQuoteRows(); }
+        if(match && !row.precio){ row.precio = match.precioFinal || 0; tr.querySelector('.q-precio').value = row.precio; refreshSub(); }
       }
     });
-    tr.querySelector('.q-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
-    tr.querySelector('.q-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateQuoteTotal(); renderQuoteRows(); });
+    attachPartAutocomplete(descInput, ()=>row.tipo, part=>{
+      row.desc = part.nombre;
+      row.precio = part.precioFinal || 0;
+      descInput.value = part.nombre;
+      tr.querySelector('.q-precio').value = row.precio;
+      refreshSub();
+    });
+    tr.querySelector('.q-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; refreshSub(); });
+    tr.querySelector('.q-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; refreshSub(); });
     tr.querySelector('.q-del').addEventListener('click', ()=>{ quoteRows = quoteRows.filter(r=>r.id!==id); renderQuoteRows(); updateQuoteTotal(); });
   });
   updateQuoteTotal();
@@ -1358,10 +1458,10 @@ function renderOptionalRows(){
         <option value="repuesto" ${r.tipo==='repuesto'?'selected':''}>Repuesto</option>
         <option value="mano_de_obra" ${r.tipo==='mano_de_obra'?'selected':''}>Mano de obra</option>
       </select></td>
-      <td><input class="o-desc" value="${esc(r.desc)}" placeholder="descripción" ${r.tipo==='repuesto' ? 'list="parts-datalist"' : ''}></td>
+      <td><input class="o-desc" value="${esc(r.desc)}" placeholder="descripción o repuesto del stock" autocomplete="off"></td>
       <td><input class="o-cant" type="number" min="1" value="${r.cant}"></td>
       <td><input class="o-precio" type="number" min="0" value="${r.precio}"></td>
-      <td>${money(r.cant*r.precio)}</td>
+      <td class="o-sub">${money(r.cant*r.precio)}</td>
       <td><button class="btn small danger o-del">✕</button></td>
     </tr>
   `).join('');
@@ -1369,15 +1469,24 @@ function renderOptionalRows(){
     const id = tr.dataset.id;
     const row = optionalRows.find(r=>r.id===id);
     tr.querySelector('.o-tipo').addEventListener('change', e=>{ row.tipo=e.target.value; renderOptionalRows(); });
-    tr.querySelector('.o-desc').addEventListener('input', e=>{
-      row.desc=e.target.value;
+    const refreshSub = ()=>{ tr.querySelector('.o-sub').textContent = money(row.cant*row.precio); updateOptionalTotal(); };
+    const descInput = tr.querySelector('.o-desc');
+    descInput.addEventListener('input', e=>{
+      row.desc = e.target.value;
       if(row.tipo==='repuesto'){
         const match = findPartByName(row.desc);
-        if(match && !row.precio){ row.precio = match.precioFinal || 0; updateOptionalTotal(); renderOptionalRows(); }
+        if(match && !row.precio){ row.precio = match.precioFinal || 0; tr.querySelector('.o-precio').value = row.precio; refreshSub(); }
       }
     });
-    tr.querySelector('.o-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
-    tr.querySelector('.o-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; updateOptionalTotal(); renderOptionalRows(); });
+    attachPartAutocomplete(descInput, ()=>row.tipo, part=>{
+      row.desc = part.nombre;
+      row.precio = part.precioFinal || 0;
+      descInput.value = part.nombre;
+      tr.querySelector('.o-precio').value = row.precio;
+      refreshSub();
+    });
+    tr.querySelector('.o-cant').addEventListener('input', e=>{ row.cant=Number(e.target.value)||0; refreshSub(); });
+    tr.querySelector('.o-precio').addEventListener('input', e=>{ row.precio=Number(e.target.value)||0; refreshSub(); });
     tr.querySelector('.o-del').addEventListener('click', ()=>{ optionalRows = optionalRows.filter(r=>r.id!==id); renderOptionalRows(); updateOptionalTotal(); });
   });
   updateOptionalTotal();
