@@ -1650,53 +1650,148 @@ function quoteSummaryText(q){
   }
   return lines.join('\n');
 }
-function exportQuotePDF(q){
-  if(typeof window.jspdf === 'undefined'){ alert('No se pudo cargar el generador de PDF. Revisá tu conexión a internet.'); return; }
+/* ---------------- PDF del presupuesto (estilo factura, con logo) ---------------- */
+let _quoteLogo = null; // null = sin cargar, '' = no disponible
+async function getQuoteLogo(){
+  if(_quoteLogo !== null) return _quoteLogo || null;
+  try{
+    const res = await fetch('icon-512.png');
+    if(!res.ok) throw new Error('sin logo');
+    const url = URL.createObjectURL(await res.blob());
+    const img = await new Promise((ok, fail)=>{ const i = new Image(); i.onload = ()=>ok(i); i.onerror = fail; i.src = url; });
+    const c = document.createElement('canvas'); c.width = c.height = 300;
+    const g = c.getContext('2d');
+    g.fillStyle = '#0c1622'; g.fillRect(0,0,300,300);
+    g.beginPath(); g.arc(150,150,150,0,Math.PI*2); g.clip();
+    const sx = 512*0.07, sw = 512*0.86;           // recorta el borde gris y deja solo la chapa redonda
+    g.drawImage(img, sx, sx, sw, sw, 0, 0, 300, 300);
+    _quoteLogo = c.toDataURL('image/jpeg', 0.9);
+    URL.revokeObjectURL(url);
+  }catch(e){ _quoteLogo = ''; }
+  return _quoteLogo || null;
+}
+function fmtQuoteDate(iso){
+  const p = String(iso||'').split('-');
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : (iso || '');
+}
+async function buildQuotePDF(q){
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF();
-  let y = 20;
-  doc.setFontSize(16); doc.text('BIKE MPV - Presupuesto', 14, y); y+=10;
-  doc.setFontSize(11);
-  if(q.cliente){ doc.text(`Cliente: ${q.cliente}`, 14, y); y+=7; }
-  if(q.bici){ doc.text(`Bici: ${q.bici}`, 14, y); y+=7; }
-  doc.text(`Fecha: ${q.fecha}`, 14, y); y+=10;
-  doc.setFontSize(10);
-  doc.text('Cant.', 14, y); doc.text('Descripción', 34, y); doc.text('Subtotal', 170, y); y+=4;
-  doc.line(14, y, 196, y); y+=6;
-  q.items.forEach(it=>{
-    const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
-    doc.text(String(it.cant), 14, y);
-    doc.text((it.desc || tipo).slice(0,60), 34, y);
-    doc.text(money(it.cant*it.precio), 170, y);
-    y+=7;
-    if(y>270){ doc.addPage(); y=20; }
-  });
-  y+=4; doc.line(14, y, 196, y); y+=10;
-  doc.setFontSize(13); doc.text(`Total: ${money(q.total)}`, 140, y); y+=10;
+  const doc = new jsPDF({ unit:'mm', format:'a4' });
+  const NAVY=[12,22,34], ORANGE=[226,102,28], GRAY=[110,120,132], LIGHT=[243,245,248], INK=[30,36,44];
+  const logo = await getQuoteLogo();
 
+  // --- encabezado ---
+  doc.setFillColor(...NAVY); doc.rect(0,0,210,40,'F');
+  doc.setFillColor(...ORANGE); doc.rect(0,40,210,2,'F');
+  if(logo) doc.addImage(logo, 'JPEG', 14, 7, 26, 26);
+  const tx = logo ? 46 : 14;
+  doc.setTextColor(255,255,255); doc.setFont('helvetica','bold'); doc.setFontSize(22); doc.text('BIKE MPV', tx, 21);
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(195,204,214); doc.text('Mecánica de bicicletas', tx, 28);
+  doc.setFont('helvetica','bold'); doc.setFontSize(17); doc.setTextColor(...ORANGE); doc.text('PRESUPUESTO', 196, 18, {align:'right'});
+  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(255,255,255);
+  doc.text('Fecha: ' + fmtQuoteDate(q.fecha), 196, 26, {align:'right'});
+  doc.text('Ref: ' + String(q.id||'').slice(-5).toUpperCase(), 196, 32, {align:'right'});
+
+  // --- datos del cliente ---
+  let y = 54;
+  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...GRAY);
+  doc.text('CLIENTE', 14, y); doc.text('BICI / REFERENCIA', 110, y);
+  doc.setFont('helvetica','normal'); doc.setFontSize(11); doc.setTextColor(...INK);
+  doc.text(doc.splitTextToSize(q.cliente || '-', 90), 14, y+6);
+  doc.text(doc.splitTextToSize(q.bici || '-', 86), 110, y+6);
+  y += 18;
+
+  // --- tabla ---
+  const drawHead = ()=>{
+    doc.setFillColor(...NAVY); doc.rect(14,y,182,8,'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(255,255,255);
+    doc.text('CANT.', 17, y+5.4); doc.text('DESCRIPCIÓN', 30, y+5.4);
+    doc.text('P. UNIT.', 166, y+5.4, {align:'right'}); doc.text('SUBTOTAL', 193, y+5.4, {align:'right'});
+    y += 8;
+  };
+  const drawItems = items=>{
+    items.forEach((it,i)=>{
+      const labor = it.tipo === 'mano_de_obra';
+      const lines = doc.splitTextToSize(it.desc || (labor ? 'Mano de obra' : 'Repuesto'), 112);
+      const showTag = labor && it.desc;
+      const h = lines.length*4.6 + (showTag ? 3.6 : 0) + 4;
+      if(y + h > 272){ doc.addPage(); y = 20; drawHead(); }
+      if(i % 2 === 0){ doc.setFillColor(...LIGHT); doc.rect(14,y,182,h,'F'); }
+      const ty = y + 6;
+      doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...INK);
+      doc.text(String(it.cant), 17, ty);
+      lines.forEach((l,k)=> doc.text(l, 30, ty + k*4.6));
+      doc.text(money(it.precio), 166, ty, {align:'right'});
+      doc.text(money(it.cant*it.precio), 193, ty, {align:'right'});
+      if(showTag){ doc.setFontSize(8); doc.setTextColor(...GRAY); doc.text('Mano de obra', 30, ty + (lines.length-1)*4.6 + 3.8); }
+      y += h;
+    });
+    doc.setDrawColor(...NAVY); doc.setLineWidth(0.3); doc.line(14, y, 196, y);
+  };
+  drawHead();
+  drawItems(q.items || []);
+
+  // --- total ---
+  y += 8;
+  if(y + 14 > 272){ doc.addPage(); y = 20; }
+  doc.setFillColor(...ORANGE); doc.rect(120,y,76,11,'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255);
+  doc.text('TOTAL', 125, y+7.4); doc.text(money(q.total), 193, y+7.4, {align:'right'});
+  y += 11 + 10;
+
+  // --- opcionales ---
   const opcionales = q.opcionales || [];
   if(opcionales.length){
-    doc.setFontSize(12); doc.text('Opcional (a confirmar con el cliente):', 14, y); y+=8;
-    doc.setFontSize(10);
-    opcionales.forEach(it=>{
-      const tipo = it.tipo==='mano_de_obra' ? 'Mano de obra' : 'Repuesto';
-      doc.text(String(it.cant), 14, y);
-      doc.text((it.desc || tipo).slice(0,60), 34, y);
-      doc.text(money(it.cant*it.precio), 170, y);
-      y+=7;
-      if(y>270){ doc.addPage(); y=20; }
-    });
+    if(y + 30 > 272){ doc.addPage(); y = 20; }
+    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...ORANGE);
+    doc.text('OPCIONALES (a confirmar con el cliente)', 14, y); y += 4;
+    drawHead();
+    drawItems(opcionales);
     const opcTotal = opcionales.reduce((s,r)=>s+(r.cant*r.precio),0);
-    y+=3; doc.setFontSize(11); doc.text(`Subtotal opcional: ${money(opcTotal)}`, 140, y);
+    y += 7;
+    doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(...INK);
+    doc.text('Subtotal opcional: ' + money(opcTotal), 193, y, {align:'right'});
   }
-  doc.save(`presupuesto_${(q.cliente||'cliente').replace(/\s+/g,'_')}.pdf`);
+
+  // --- pie de página ---
+  const pages = doc.getNumberOfPages();
+  for(let i=1; i<=pages; i++){
+    doc.setPage(i);
+    doc.setDrawColor(220,225,231); doc.setLineWidth(0.2); doc.line(14, 284, 196, 284);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(...GRAY);
+    doc.text('BIKE MPV · Gracias por confiar en nosotros', 105, 290, {align:'center'});
+    if(pages > 1) doc.text(`${i}/${pages}`, 196, 290, {align:'right'});
+  }
+
+  const safe = (q.cliente || 'cliente').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w]+/g,'_').replace(/^_+|_+$/g,'') || 'cliente';
+  return { doc, filename: `presupuesto_${safe}.pdf` };
 }
-function shareQuoteWhatsApp(q){
-  const text = encodeURIComponent(quoteSummaryText(q));
+async function exportQuotePDF(q){
+  if(typeof window.jspdf === 'undefined'){ alert('No se pudo cargar el generador de PDF. Revisá tu conexión a internet.'); return; }
+  try{
+    const { doc, filename } = await buildQuotePDF(q);
+    doc.save(filename);
+  }catch(e){ alert('No se pudo generar el PDF: ' + e.message); }
+}
+async function shareQuoteWhatsApp(q){
+  if(typeof window.jspdf === 'undefined'){ alert('No se pudo cargar el generador de PDF. Revisá tu conexión a internet.'); return; }
+  let built;
+  try{ built = await buildQuotePDF(q); }
+  catch(e){ alert('No se pudo generar el PDF: ' + e.message); return; }
+  const file = new File([built.doc.output('blob')], built.filename, { type:'application/pdf' });
+  const intro = `Hola${q.cliente ? ' ' + q.cliente : ''}! Te paso el presupuesto de BIKE MPV por ${money(q.total)}.`;
+  // Celular: abre el menú de compartir con el PDF adjunto (elegís WhatsApp y el contacto)
+  if(navigator.canShare && navigator.canShare({ files:[file] })){
+    try{ await navigator.share({ files:[file], text: intro }); return; }
+    catch(e){ if(e && e.name === 'AbortError') return; }
+  }
+  // Compu / navegador sin soporte: descarga el PDF y abre WhatsApp para que lo adjuntes
+  built.doc.save(built.filename);
   const phone = (q.telefono||'').replace(/[^0-9]/g,'');
-  const url = phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`;
-  window.open(url, '_blank');
+  const text = encodeURIComponent(intro + ' (Te adjunto el PDF)');
+  window.open(phone ? `https://wa.me/${phone}?text=${text}` : `https://wa.me/?text=${text}`, '_blank');
 }
+setTimeout(()=>{ try{ getQuoteLogo(); }catch(e){} }, 1500);
 
 /* ---------------- ajustes ---------------- */
 document.getElementById('btn-change-pass').addEventListener('click', async ()=>{
