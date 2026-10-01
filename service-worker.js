@@ -1,4 +1,4 @@
-const CACHE_NAME = "bikempv-v2";
+const CACHE_NAME = "bikempv-v3";
 const ASSETS = [
   "./",
   "./index.html",
