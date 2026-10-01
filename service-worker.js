@@ -1,4 +1,4 @@
-const CACHE_NAME = "bikempv-v3";
+const CACHE_NAME = "bikempv-v2";
 const ASSETS = [
   "./",
   "./index.html",
@@ -25,6 +25,7 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+  if (event.request.url.endsWith("intro.mp4")) return; // el video lo maneja el navegador (Safari necesita pedirlo por partes)
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const fetchPromise = fetch(event.request)

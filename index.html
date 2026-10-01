@@ -280,6 +280,31 @@
 </style>
 </head>
 <body>
+<!-- ===== INTRO: video de bienvenida (intro.mp4) ===== -->
+<div id="intro-screen" style="display:none;position:fixed;inset:0;z-index:1000;background:#0c1622;align-items:center;justify-content:center;">
+  <video id="intro-video" muted playsinline preload="auto" style="max-width:100%;max-height:100%;"></video>
+  <button id="intro-skip" style="position:absolute;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));padding:8px 16px;border-radius:20px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.45);color:#fff;font-size:13px;">Saltar</button>
+</div>
+<script>
+(function(){
+  var box = document.getElementById('intro-screen');
+  var v = document.getElementById('intro-video');
+  var done = false;
+  function close(){ if(done) return; done = true; try{ v.pause(); }catch(e){} box.style.display = 'none'; v.removeAttribute('src'); }
+  try{
+    if(sessionStorage.getItem('introShown')) return;   // una vez por apertura de la app
+    sessionStorage.setItem('introShown', '1');
+  }catch(e){}
+  box.style.display = 'flex';
+  document.getElementById('intro-skip').addEventListener('click', close);
+  v.addEventListener('ended', close);
+  v.addEventListener('error', close);                  // si el video no existe o falla, abre la app normal
+  var guard = setTimeout(function(){ if(v.paused) close(); }, 4000);  // si no arranca en 4 s, se salta
+  v.addEventListener('playing', function(){ clearTimeout(guard); });
+  v.src = 'intro.mp4';
+  var p = v.play(); if(p && p.catch) p.catch(close);
+})();
+</script>
 
 <!-- ===================== LOGIN ===================== -->
 <div id="login-screen">
