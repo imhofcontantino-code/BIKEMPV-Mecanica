@@ -1,0 +1,2171 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Motor IA</title><meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.json"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png">
+<style>:root{--bg:#0b1220;--panel:#121c2f;--panel2:#18253b;--line:#24344f;--tx:#e8eefc;--mut:#8fa3c4;--acc:#3b82f6;--ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--me:#1d4ed8;--bot:#18253b;--fs:16px}
+:root[data-theme=light]{--bg:#f3f6fb;--panel:#fff;--panel2:#eef2f9;--line:#d7dfec;--tx:#0f1b33;--mut:#5b6b88;--me:#2563eb;--bot:#fff}
+@media (prefers-color-scheme:light){:root:not([data-theme=dark]):not([data-theme=light]){--bg:#f3f6fb;--panel:#fff;--panel2:#eef2f9;--line:#d7dfec;--tx:#0f1b33;--mut:#5b6b88;--me:#2563eb;--bot:#fff}}
+:root[data-big=true]{--fs:19px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--tx);font:var(--fs)/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+header img{width:34px;height:34px;border-radius:9px;object-fit:cover;background:var(--panel2)}
+header .tt{flex:1;min-width:0}
+header .tt b{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header .tt small{color:var(--mut)}
+.ib{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;min-width:40px;min-height:40px}
+.ib:active{transform:scale(.96)}
+.banner{background:linear-gradient(90deg,#92400e,#b45309);color:#fff;font-size:.82em;padding:6px 14px;text-align:center}
+.alertbar{display:none;background:rgba(245,158,11,.14);border-bottom:1px solid rgba(245,158,11,.4);color:var(--warn);padding:7px 14px;font-size:.88em;cursor:pointer}
+.tabs{display:flex;background:var(--panel);border-bottom:1px solid var(--line)}
+.tabs button{flex:1;background:none;border:0;border-bottom:3px solid transparent;padding:11px 4px;color:var(--mut);cursor:pointer}
+.tabs button.on{color:var(--tx);border-bottom-color:var(--acc);font-weight:600}
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.view{display:none;flex:1;min-height:0;flex-direction:column}
+.view.on{display:flex}
+#msgs{flex:1;overflow-y:auto;padding:12px 12px 4px;display:flex;flex-direction:column;gap:10px}
+.m{max-width:88%;padding:9px 12px;border-radius:14px;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:anywhere}
+.m.me{align-self:flex-end;background:var(--me);color:#fff;border-bottom-right-radius:4px}
+.m.bot{align-self:flex-start;background:var(--bot);border:1px solid var(--line);border-bottom-left-radius:4px}
+.m img.foto{display:block;max-width:100%;max-height:180px;border-radius:10px;margin-bottom:6px}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.btns button{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:7px 12px;cursor:pointer;font-size:.9em}
+.btns button.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btns button:disabled{opacity:.5}
+.typing{color:var(--mut);font-style:italic}
+.chips{display:flex;gap:6px;padding:6px 12px;overflow-x:auto;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;font-size:.88em;white-space:nowrap}
+.bar{display:flex;gap:8px;align-items:flex-end;padding:8px 12px calc(8px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
+.bar textarea{flex:1;resize:none;max-height:120px;min-height:42px;padding:10px 12px;border-radius:14px;border:1px solid var(--line);background:var(--bg);outline:none}
+.bar .ib{height:42px}
+.bar .send{background:var(--acc);border-color:var(--acc);color:#fff}
+.bar .mic.on{background:var(--bad);border-color:var(--bad);color:#fff;animation:pulse 1s infinite}
+.bar .mic.hf{outline:2px solid var(--ok)}
+@keyframes pulse{50%{opacity:.6}}
+.live{font-size:.8em;color:var(--mut);padding:0 14px 4px;min-height:1.2em}
+.list{flex:1;overflow-y:auto;padding:12px}
+.row{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.row small{color:var(--mut);display:block}
+.row .acc{float:right;color:var(--bad);cursor:pointer;background:none;border:0}
+.search{margin:10px 12px 0;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);width:calc(100% - 24px)}
+.sub{display:flex;gap:6px;padding:8px 12px;overflow-x:auto}
+.sub button{flex:none;background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.sub button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:30;display:none;flex-direction:column}
+.sheet.on{display:flex}
+.sheet .hd{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+.sheet .hd b{flex:1}
+.sheet .bd{flex:1;overflow-y:auto;padding:12px 14px 40px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px}
+summary{padding:12px 14px;cursor:pointer;font-weight:600}
+details .in{padding:0 14px 14px}
+.f{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.f label{color:var(--mut);font-size:.85em}
+.f input[type=text],.f input[type=password],.f input[type=number],.f input[type=email],.f select,.f textarea{padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);width:100%}
+.f textarea{min-height:90px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.sw:last-child{border:0}
+.sw input{width:22px;height:22px}
+.note{color:var(--mut);font-size:.82em}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;font-size:.78em;background:var(--panel2);border:1px solid var(--line);margin-right:4px}
+.pill.ok{color:var(--ok)}.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:12px;z-index:60;display:none;max-width:90%;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:center;justify-content:center;padding:20px}
+.modal.on{display:flex}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:380px}
+.modal h3{margin:0 0 10px}
+.big{width:100%;padding:11px;border-radius:12px;border:0;background:var(--acc);color:#fff;cursor:pointer;margin-top:8px}
+.big.sec{background:var(--panel2);color:var(--tx);border:1px solid var(--line)}
+.big.bad{background:var(--bad)}
+</style></head><body>
+<header><img id="hLogo" alt=""><div class="tt"><b id="hNom"></b><small id="hSub"></small></div><span id="iaPill" class="note"></span>
+<select id="userSel" class="ib" style="max-width:110px"></select><button class="ib" id="cfgBtn" title="Configuración">⚙️</button></header>
+<div class="banner" id="banner"></div><div class="alertbar" id="alertbar"></div>
+<nav class="tabs"><button data-t="chat" id="tabChat" class="on"></button><button data-t="datos" id="tabDatos"></button><button data-t="log" id="tabLog"></button></nav>
+<main>
+<section class="view on" id="v-chat"><div id="msgs"></div><div class="chips" id="chips"></div><div class="live" id="live"></div>
+<div class="bar"><button class="ib" id="attach" title="Foto">📷</button><input type="file" id="foto" accept="image/*" hidden>
+<textarea id="in" rows="1"></textarea><button class="ib mic" id="mic" title="Hablar">🎤</button><button class="ib" id="hf" title="Manos libres">🙌</button><button class="ib send" id="send">➤</button></div></section>
+<section class="view" id="v-datos"><input class="search" id="datosQ" type="search" placeholder="Buscar…"><div class="sub" id="datosSub"></div><div class="list" id="datosList"></div></section>
+<section class="view" id="v-log"><div class="list" id="logList"></div></section>
+</main>
+<div class="sheet" id="sCfg"><div class="hd"><b>⚙️ Configuración</b><button class="ib" id="cfgCerrar">✕</button></div><div class="bd" id="cfgBody"></div></div>
+<div class="sheet" id="sImp"><div class="hd"><b>📥 Importar planilla</b><button class="ib" id="impCerrar">✕</button></div><div class="bd">
+<div class="f"><label>Cargar como</label><select id="impTipo"><option value="auto">Detectar solo</option><option value="personas">Clientes / socios</option><option value="stock">Stock</option></select></div>
+<div class="f"><label>Archivo Excel o CSV</label><input type="file" id="impFile" accept=".csv,.txt,.xls,.xlsx"></div>
+<div class="f"><label>…o pegá las filas (la primera fila son los títulos de columna: nombre, telefono, cantidad, precio…)</label><textarea id="impTxt" style="min-height:160px"></textarea></div>
+<div id="impRes"></div><button class="big" id="impOk">Importar</button></div></div>
+<div class="modal" id="mPin"><div class="box"><h3>🔒 PIN</h3><input type="password" id="pinIn" inputmode="numeric" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg)"><div id="pinErr" class="note" style="color:var(--bad);min-height:1.2em"></div><button class="big" id="pinOk">Entrar</button><button class="big sec" id="pinNo">Cancelar</button></div></div>
+<div class="toast" id="toast"></div>
+<script>
+/* ============ Utilidades ============ */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const pad2 = n => String(n).padStart(2, '0');
+const iso = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+const todayIso = () => iso(new Date());
+const addDays = (n, from) => { const d = from ? new Date(from + 'T12:00:00') : new Date(); d.setDate(d.getDate() + n); return iso(d); };
+const nowHM = () => { const d = new Date(); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); };
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const ucf = s => String(s || '').charAt(0).toUpperCase() + String(s || '').slice(1);
+const cap = s => String(s || '').replace(/(^|\s)(\S)/g, (m, a, b) => a + b.toUpperCase());
+const norm = s => String(s == null ? '' : s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s:\/.,$%+@#-]/g, ' ').replace(/\s+/g, ' ').trim();
+const STOP = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'un', 'una', 'y', 'e', 'a', 'al', 'en', 'para', 'con', 'por', 'the', 'of', 'and', 'to', 'for', 'with']);
+const stem = t => t.length > 4 ? t.replace(/(es|s)$/, '') : t.replace(/s$/, '');
+const toks = s => norm(s).split(/[\s,.:;/-]+/).filter(Boolean);
+const sigToks = s => toks(s).filter(t => !STOP.has(t));
+
+function lev(a, b) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 3) return 9;
+  const m = []; for (let i = 0; i <= a.length; i++) m[i] = [i];
+  for (let j = 1; j <= b.length; j++) m[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    m[i][j] = Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return m[a.length][b.length];
+}
+function tokEq(a, b) {
+  if (a === b) return 1;
+  const sa = stem(a), sb = stem(b);
+  if (sa === sb) return 1;
+  const L = Math.min(sa.length, sb.length);
+  if (L >= 4 && lev(sa, sb) <= (L >= 8 ? 2 : 1)) return 0.8;
+  return 0;
+}
+/* Cuánto de los tokens de `name` aparecen en la frase `q` (0..1) */
+function mentionScore(q, name) {
+  const qt = toks(q), nt = sigToks(name);
+  if (!nt.length) return 0;
+  let hit = 0;
+  for (const t of nt) { let best = 0; for (const x of qt) best = Math.max(best, tokEq(x, t)); hit += best; }
+  return hit / nt.length;
+}
+
+const parseNum = (s) => {
+  s = String(s == null ? '' : s).replace(/[$\s]/g, '');
+  if (!s) return NaN;
+  if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(s)) return parseFloat(s.replace(/\./g, '').replace(',', '.'));
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) return parseFloat(s.replace(/,/g, ''));
+  return parseFloat(s.replace(',', '.'));
+};
+const WORDNUM = { un: 1, uno: 1, una: 1, dos: 2, tres: 3, cuatro: 4, cinco: 5, seis: 6, siete: 7, ocho: 8, nueve: 9, diez: 10, once: 11, doce: 12, quince: 15, veinte: 20, treinta: 30, cuarenta: 40, cincuenta: 50, cien: 100, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, twelve: 12, twenty: 20 };
+const numerosAPalabra = q => q.replace(/\b(uno|una|dos|tres|cuatro|cinco|seis|siete|ocho|nueve|diez|once|doce|quince|veinte|treinta|cuarenta|cincuenta|cien|one|two|three|four|five|six|seven|eight|nine|ten|twelve|twenty)\b(?=\s+[a-z])/g, (m, w) => WORDNUM[w]);
+const money = n => '$' + (Math.round(n * 100) / 100).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+
+const DIAS_ES = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
+const DIAS_EN = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+const DIAS_TXT = { es: ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'], en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'] };
+const fmtFecha = (isoStr, lang) => {
+  if (!isoStr) return '';
+  const [y, m, d] = isoStr.split('-');
+  const dow = new Date(isoStr + 'T12:00:00').getDay();
+  const base = `${d}/${m}/${y}`;
+  return `${DIAS_TXT[lang || 'es'][dow]} ${base}`;
+};
+const fmtFechaCorta = isoStr => { const [y, m, d] = isoStr.split('-'); return `${d}/${m}/${y}`; };
+
+/* Busca una fecha dentro de q (ya normalizado). Devuelve {iso, rest, rango?} o null */
+function parseFecha(q) {
+  const hoy = todayIso();
+  let m;
+  const cut = (re, iso_, extra) => ({ iso: iso_, rest: q.replace(re, ' ').replace(/\s+/g, ' ').trim(), ...extra });
+  if ((m = q.match(/\b(pasado manana|day after tomorrow)\b/))) return cut(/\b(pasado manana|day after tomorrow)\b/, addDays(2));
+  if ((m = q.match(/\b(manana|tomorrow)\b/))) return cut(/\b(manana|tomorrow)\b/, addDays(1));
+  if ((m = q.match(/\b(hoy|today)\b/))) return cut(/\b(hoy|today)\b/, hoy);
+  if ((m = q.match(/\b(anteayer|antes de ayer)\b/))) return cut(/\b(anteayer|antes de ayer)\b/, addDays(-2));
+  if ((m = q.match(/\b(ayer|yesterday)\b/))) return cut(/\b(ayer|yesterday)\b/, addDays(-1));
+  if ((m = q.match(/\b(esta semana|this week)\b/))) return cut(/\b(esta semana|this week)\b/, hoy, { rango: 'semana' });
+  if ((m = q.match(/\b(la semana que viene|proxima semana|next week)\b/))) return cut(/\b(la semana que viene|proxima semana|next week)\b/, addDays(7), { rango: 'semana' });
+  if ((m = q.match(/\b(este mes|this month)\b/))) return cut(/\b(este mes|this month)\b/, hoy, { rango: 'mes' });
+  if ((m = q.match(/\ben (\d{1,2}) (dias|dia|days|day)\b/))) return cut(/\ben (\d{1,2}) (dias|dia|days|day)\b/, addDays(parseInt(m[1])));
+  if ((m = q.match(/\b(\d{1,2})[\/-](\d{1,2})(?:[\/-](\d{2,4}))?\b/))) {
+    let [_, d, mo, y] = m; d = +d; mo = +mo;
+    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+      let yy = y ? (y.length === 2 ? 2000 + +y : +y) : new Date().getFullYear();
+      let cand = `${yy}-${pad2(mo)}-${pad2(d)}`;
+      if (!y && cand < hoy && (new Date(hoy) - new Date(cand)) > 180 * 864e5) cand = `${yy + 1}-${pad2(mo)}-${pad2(d)}`;
+      return cut(m[0], cand);
+    }
+  }
+  const re = new RegExp(`\\b(?:(?:on|el|la|este|esta|this)\\s+)?(?:(proximo|proxima|next)\\s+)?(${[...DIAS_ES, ...DIAS_EN].join('|')})\\b`);
+  if ((m = q.match(re))) {
+    const w = m[2]; let dow = DIAS_ES.indexOf(w); if (dow < 0) dow = DIAS_EN.indexOf(w);
+    const now = new Date().getDay();
+    let diff = (dow - now + 7) % 7;
+    if (diff === 0 && /^(proximo|proxima|next)$/.test(m[1] || '')) diff = 7;
+    return { iso: addDays(diff), rest: q.replace(m[0], ' ').replace(/\s+/g, ' ').trim() };
+  }
+  if ((m = q.match(/\b(?:el|dia|on the)\s+(\d{1,2})\b(?!\s*(?:[:h]|pm|am))/))) {
+    const d = parseInt(m[1]);
+    if (d >= 1 && d <= 31) {
+      const n = new Date(); let y = n.getFullYear(), mo = n.getMonth() + 1;
+      let cand = `${y}-${pad2(mo)}-${pad2(d)}`;
+      if (cand < hoy) { mo++; if (mo > 12) { mo = 1; y++; } cand = `${y}-${pad2(mo)}-${pad2(d)}`; }
+      return { iso: cand, rest: q.replace(m[0], ' ').replace(/\s+/g, ' ').trim() };
+    }
+  }
+  return null;
+}
+/* Hora: "a las 15", "15:30", "3 pm", "3 de la tarde". Devuelve {hm, rest} */
+function parseHora(q) {
+  let m;
+  const done = (h, mi, re) => { if (h > 23 || mi > 59) return null; return { hm: `${pad2(h)}:${pad2(mi)}`, rest: q.replace(re, ' ').replace(/\s+/g, ' ').trim() }; };
+  let re;
+  re = /\b(?:a la|a las|a|at|@)?\s*(\d{1,2})[:.h](\d{2})\s*(am|pm|hs|hrs|h)?\b/;
+  if ((m = q.match(re)) && (m[3] || /[:h]/.test(m[0]) || /a las|a la|at|@/.test(m[0]))) {
+    let h = +m[1]; const mi = +m[2];
+    if (m[3] === 'pm' && h < 12) h += 12; if (m[3] === 'am' && h === 12) h = 0;
+    const r = done(h, mi, re); if (r) return r;
+  }
+  re = /\b(?:at\s+|@\s*)?(\d{1,2})\s*(am|pm)\b/;
+  if ((m = q.match(re))) { let h = +m[1]; if (m[2] === 'pm' && h < 12) h += 12; if (m[2] === 'am' && h === 12) h = 0; const r = done(h, 0, re); if (r) return r; }
+  re = /\b(?:a la|a las|at)\s+(\d{1,2})(?:\s*(hs|hrs|h))?(?:\s+de la\s+(manana|tarde|noche))?\b/;
+  if ((m = q.match(re))) {
+    let h = +m[1];
+    if (m[3] && m[3] !== 'manana' && h < 12) h += 12;
+    const r = done(h, 0, re); if (r) return r;
+  }
+  re = /\b(\d{1,2})\s*(hs|hrs)\b/;
+  if ((m = q.match(re))) { const r = done(+m[1], 0, re); if (r) return r; }
+  return null;
+}
+const rangoFechas = (f) => {
+  if (!f) return null;
+  if (f.rango === 'semana') { const d = new Date(f.iso + 'T12:00:00'); const dow = (d.getDay() + 6) % 7; return [addDays(-dow, f.iso), addDays(6 - dow, f.iso)]; }
+  if (f.rango === 'mes') { const [y, m] = f.iso.split('-'); const last = new Date(+y, +m, 0).getDate(); return [`${y}-${m}-01`, `${y}-${m}-${pad2(last)}`]; }
+  return [f.iso, f.iso];
+};
+
+/* hash/crypto */
+async function sha256hex(s) {
+  const b = new TextEncoder().encode(s);
+  if (window.crypto && crypto.subtle) { const h = await crypto.subtle.digest('SHA-256', b); return [...new Uint8Array(h)].map(x => x.toString(16).padStart(2, '0')).join(''); }
+  let h = 5381; for (const c of s) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return 'x' + (h >>> 0).toString(16);
+}
+async function hmacHex(secret, msg) {
+  if (!(window.crypto && crypto.subtle)) return sha256hex(secret + msg);
+  const k = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const sig = await crypto.subtle.sign('HMAC', k, new TextEncoder().encode(msg));
+  return [...new Uint8Array(sig)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+const b64u = s => btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+const unb64u = s => decodeURIComponent(escape(atob(s.replace(/-/g, '+').replace(/_/g, '/'))));
+const safeJSON = (s, d) => { try { return JSON.parse(s); } catch (_) { return d; } };
+const lsGet = (k, d) => { try { const v = localStorage.getItem(k); return v == null ? d : safeJSON(v, d); } catch (_) { return d; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} };
+const descargar = (blob, name) => { const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(u), 60000); };
+
+/* ============ Datos: almacenamiento (local o Firebase) + transacciones con deshacer ============ */
+const COLS = ['personas', 'stock', 'agenda', 'servicios', 'accesos', 'recordatorios', 'facturas', 'plantillas', 'log'];
+
+const Store = {
+  prefix: 'motor_',
+  cache: {},
+  backend: 'local',      // 'local' | 'firebase'
+  fb: null,
+  init(appId) {
+    this.prefix = 'motor_' + (appId || 'app') + '_';
+    for (const c of COLS) this.cache[c] = lsGet(this.prefix + c, []);
+  },
+  all(c) { return this.cache[c] || (this.cache[c] = []); },
+  get(c, id) { return this.all(c).find(x => x.id === id); },
+  _persist(c) { lsSet(this.prefix + c, this.all(c)); },
+  add(c, doc) {
+    doc = { ...doc, id: doc.id || uid() };
+    this.all(c).push(doc); this._persist(c); this._fb('set', c, doc); return doc;
+  },
+  update(c, id, patch) {
+    const d = this.get(c, id); if (!d) return null;
+    Object.assign(d, patch); this._persist(c); this._fb('set', c, d); return d;
+  },
+  remove(c, id) {
+    const a = this.all(c); const i = a.findIndex(x => x.id === id); if (i < 0) return false;
+    a.splice(i, 1); this._persist(c); this._fb('del', c, { id }); return true;
+  },
+  clearAll() { for (const c of COLS) { this.cache[c] = []; this._persist(c); } },
+  replaceAll(data) { for (const c of COLS) { this.cache[c] = Array.isArray(data[c]) ? data[c] : []; this._persist(c); } },
+  dump() { const o = {}; for (const c of COLS) o[c] = this.all(c); return o; },
+
+  /* ---- Firebase (opcional): mantiene la misma API síncrona con caché local ---- */
+  async conectarFirebase(config, user, pass) {
+    const V = '10.12.2';
+    const [{ initializeApp }, { getAuth, signInWithEmailAndPassword }, F] = await Promise.all([
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-app.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-auth.js`),
+      import(`https://www.gstatic.com/firebasejs/${V}/firebase-firestore.js`)
+    ]);
+    const app = initializeApp(config, 'motor');
+    if (user && pass) await signInWithEmailAndPassword(getAuth(app), user, pass);
+    const db = F.getFirestore(app);
+    this.fb = { F, db, unsubs: [] };
+    for (const c of COLS) {
+      const col = F.collection(db, 'motor_' + c);
+      await new Promise(res => {
+        let first = true;
+        const un = F.onSnapshot(col, snap => {
+          this.cache[c] = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+          this._persist(c);
+          if (first) { first = false; res(); } else if (window.UI) UI.refrescarDatos();
+        }, err => { console.warn('Firestore', c, err.message); if (first) { first = false; res(); } });
+        this.fb.unsubs.push(un);
+      });
+    }
+    this.backend = 'firebase';
+  },
+  _fb(op, c, doc) {
+    if (!this.fb) return;
+    const { F, db } = this.fb;
+    try {
+      if (op === 'set') { const { id, ...rest } = doc; F.setDoc(F.doc(db, 'motor_' + c, id), JSON.parse(JSON.stringify(rest))); }
+      else F.deleteDoc(F.doc(db, 'motor_' + c, doc.id));
+    } catch (e) { console.warn('fb', e); }
+  }
+};
+
+function bk_toFirestoreValue(v){
+  if(v === null || v === undefined) return { nullValue: null };
+  if(typeof v === 'string') return { stringValue: v };
+  if(typeof v === 'boolean') return { booleanValue: v };
+  if(typeof v === 'number') return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+  if(Array.isArray(v)) return { arrayValue: { values: v.map(bk_toFirestoreValue) } };
+  if(typeof v === 'object') return { mapValue: { fields: bk_toFirestoreFields(v) } };
+  return { stringValue: String(v) };
+}
+
+function bk_toFirestoreFields(obj){
+  const out = {};
+  for(const k in obj) out[k] = bk_toFirestoreValue(obj[k]);
+  return out;
+}
+
+function bk_fromFirestoreValue(v){
+  if(!v) return null;
+  if('stringValue' in v) return v.stringValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('integerValue' in v) return parseInt(v.integerValue, 10);
+  if('doubleValue' in v) return v.doubleValue;
+  if('nullValue' in v) return null;
+  if('arrayValue' in v) return (v.arrayValue.values || []).map(bk_fromFirestoreValue);
+  if('mapValue' in v) return bk_fromFirestoreFields(v.mapValue.fields || {});
+  return null;
+}
+
+function bk_fromFirestoreFields(fields){
+  const out = {};
+  for(const k in fields) out[k] = bk_fromFirestoreValue(fields[k]);
+  return out;
+}
+
+async function bk_fsGet(projectId, path){
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/default/documents/${path}`;
+  const res = await fetch(url);
+  if(res.status === 404) return null;
+  if(!res.ok) throw new Error('No se pudo leer de Firestore (código ' + res.status + '). Revisá que el projectId sea correcto y que las reglas de Firestore permitan lectura.');
+  const data = await res.json();
+  return data.fields ? bk_fromFirestoreFields(data.fields) : {};
+}
+
+async function bk_fsSet(projectId, path, obj){
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/default/documents/${path}`;
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fields: bk_toFirestoreFields(obj || {}) })
+  });
+  if(res.ok) return;
+  if(res.status === 404){
+    // El documento todavía no existe: lo creamos explícitamente con POST.
+    const parts = path.split('/');
+    const docId = parts.pop();
+    const collectionPath = parts.join('/');
+    const createUrl = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/default/documents/${collectionPath}?documentId=${encodeURIComponent(docId)}`;
+    const createRes = await fetch(createUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: bk_toFirestoreFields(obj || {}) })
+    });
+    if(createRes.ok) return;
+    if(createRes.status === 409){
+      // Ya existe (se creó entre medio): reintentamos el PATCH una vez.
+      const retryRes = await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fields: bk_toFirestoreFields(obj || {}) })
+      });
+      if(retryRes.ok) return;
+      throw new Error('No se pudo escribir en Firestore (código ' + retryRes.status + ').');
+    }
+    throw new Error('No se pudo crear el documento en Firestore (código ' + createRes.status + ').');
+  }
+  throw new Error('No se pudo escribir en Firestore (código ' + res.status + ').');
+}
+
+/* ===== Puente con BIKE MPV: mismos datos (mismo sitio, misma memoria del navegador) ===== */
+window.BIKE_MODE = true;
+const BIKE_KEY = 'bikempv_state_v1';
+const BK = {
+  ld() { const s = safeJSON(localStorage.getItem(BIKE_KEY), null) || {}; s.jobs = s.jobs || []; s.parts = s.parts || []; s.quotes = s.quotes || []; s.cancelados = s.cancelados || []; return s; },
+  fbId() { try { const c = JSON.parse(localStorage.getItem('bikempv_firebase_config_v1') || 'null'); return c && c.projectId; } catch (_) { return null; } },
+  sv(s) { try { localStorage.setItem(BIKE_KEY, JSON.stringify(s)); } catch (_) {} const id = BK.fbId(); if (id) { clearTimeout(BK._t); BK._t = setTimeout(() => { bk_fsSet(id, 'bikempv/state', s).catch(() => {}); }, 400); } },
+  pid: n => 'c_' + norm(n).replace(/\s+/g, '_'),
+  est: { pendiente: 'pendiente', confirmado: 'pendiente', 'en curso': 'progreso', listo: 'listo', entregado: 'entregado', realizado: 'entregado' },
+  estInv: { pendiente: 'pendiente', progreso: 'en curso', listo: 'listo', entregado: 'entregado' },
+  ag(j, canc) { return { id: j.id, fecha: j.fechaEntrega || j.fechaIngreso || '', hora: j.hora || '', personaId: BK.pid(j.cliente), personaNombre: j.cliente || '', titulo: j.descripcion || j.bici || '', objeto: j.bici || '', estado: canc ? 'cancelado' : (BK.estInv[j.estado] || 'pendiente') }; },
+  part(p) { return { id: p.id, nombre: p.nombre, categoria: p.categoria || '', cantidad: p.cantidad, precio: p.precioFinal || 0, minimo: p.minimo }; }
+};
+(async () => { const id = BK.fbId(); if (!id) return; try { const r = await bk_fsGet(id, 'bikempv/state'); if (r && r.jobs) localStorage.setItem(BIKE_KEY, JSON.stringify(r)); } catch (_) {} })();
+(function () {
+  const BR = new Set(['stock', 'agenda', 'servicios', 'personas']);
+  const raw = c => Store.cache[c] || (Store.cache[c] = []);
+  const o = {
+    all: raw,
+    add(c, doc) { doc = { ...doc, id: doc.id || uid() }; raw(c).push(doc); Store._persist(c); return doc; },
+    update(c, id, patch) { const d = raw(c).find(x => x.id === id); if (!d) return null; Object.assign(d, patch); Store._persist(c); return d; },
+    remove(c, id) { const a = raw(c); const i = a.findIndex(x => x.id === id); if (i < 0) return false; a.splice(i, 1); Store._persist(c); return true; }
+  };
+  const jobDesde = (doc, s) => {
+    const per = o.all('personas').find(p => p.id === doc.personaId) || {};
+    return { id: doc.id || uid(), cliente: doc.personaNombre || per.nombre || '', telefono: per.telefono || doc.telefono || '', bici: doc.objeto || '', estado: BK.est[doc.estado] || 'pendiente', descripcion: doc.titulo || '', fechaIngreso: doc.fecha || todayIso(), fechaEntrega: doc.fecha || todayIso(), presupuesto: 0, partsUsed: [], hora: doc.hora || '' };
+  };
+  Store.all = function (c) {
+    if (!BR.has(c)) return o.all(c);
+    const s = BK.ld();
+    if (c === 'stock') return s.parts.map(BK.part);
+    if (c === 'agenda') return s.jobs.map(j => BK.ag(j, false)).concat(s.cancelados.map(j => BK.ag(j, true)));
+    if (c === 'servicios') {
+      const der = s.jobs.filter(j => j.estado === 'listo' || j.estado === 'entregado').map(j => ({ id: 'j_' + j.id, fecha: j.fechaEntrega || j.fechaIngreso || '', personaId: BK.pid(j.cliente), personaNombre: j.cliente || '', objeto: j.bici || '', detalle: j.descripcion || 'Trabajo', importe: j.presupuesto || 0 }));
+      return der.concat(o.all('servicios'));
+    }
+    const loc = o.all('personas'); const vistos = new Set(loc.map(p => norm(p.nombre))); const der = [];
+    s.jobs.concat(s.quotes).forEach(x => { const n = (x.cliente || '').trim(); if (n && !vistos.has(norm(n))) { vistos.add(norm(n)); der.push({ id: BK.pid(n), nombre: n, telefono: x.telefono || '', alias: [], nota: x.bici || '' }); } });
+    return loc.concat(der);
+  };
+  Store.get = function (c, id) { return Store.all(c).find(x => x.id === id); };
+  Store.add = function (c, doc) {
+    if (c === 'stock') { const s = BK.ld(); const p = { id: doc.id || uid(), nombre: doc.nombre, categoria: doc.categoria || '', cantidad: Math.max(0, +doc.cantidad || 0), precioCosto: 0, precioBonificado: 0, precioFinal: +doc.precio || 0, minimo: doc.minimo }; s.parts.push(p); BK.sv(s); return BK.part(p); }
+    if (c === 'agenda') { const s = BK.ld(); const j = jobDesde(doc, s); s.jobs.push(j); BK.sv(s); return BK.ag(j, false); }
+    return o.add(c, doc);
+  };
+  Store.update = function (c, id, patch) {
+    if (c === 'stock') { const s = BK.ld(); const p = s.parts.find(x => x.id === id); if (!p) return null; if ('nombre' in patch) p.nombre = patch.nombre; if ('categoria' in patch) p.categoria = patch.categoria; if ('cantidad' in patch) p.cantidad = Math.max(0, +patch.cantidad || 0); if ('precio' in patch) p.precioFinal = +patch.precio || 0; if ('minimo' in patch) p.minimo = patch.minimo; BK.sv(s); return BK.part(p); }
+    if (c === 'agenda') {
+      const s = BK.ld(); let canc = false; let i = s.jobs.findIndex(x => x.id === id); let j = s.jobs[i];
+      if (!j) { i = s.cancelados.findIndex(x => x.id === id); j = s.cancelados[i]; canc = true; }
+      if (!j) return null;
+      if ('fecha' in patch) { j.fechaEntrega = patch.fecha; if (!j.fechaIngreso) j.fechaIngreso = patch.fecha; }
+      if ('hora' in patch) j.hora = patch.hora; if ('titulo' in patch) j.descripcion = patch.titulo; if ('personaNombre' in patch) j.cliente = patch.personaNombre; if ('objeto' in patch) j.bici = patch.objeto;
+      if ('estado' in patch) {
+        if (patch.estado === 'cancelado' && !canc) { s.jobs.splice(i, 1); s.cancelados.push(j); canc = true; }
+        else if (patch.estado !== 'cancelado') { if (canc) { s.cancelados.splice(i, 1); s.jobs.push(j); canc = false; } j.estado = BK.est[patch.estado] || 'pendiente'; }
+      }
+      BK.sv(s); return BK.ag(j, canc);
+    }
+    if (c === 'servicios' && String(id).startsWith('j_')) { const s = BK.ld(); const j = s.jobs.find(x => 'j_' + x.id === id); if (!j) return null; if ('fecha' in patch) j.fechaEntrega = patch.fecha; if ('detalle' in patch) j.descripcion = patch.detalle; if ('importe' in patch) j.presupuesto = +patch.importe || 0; if ('objeto' in patch) j.bici = patch.objeto; BK.sv(s); return Store.get('servicios', id); }
+    if (c === 'personas') {
+      if (!o.all('personas').find(p => p.id === id)) { const d = Store.all('personas').find(p => p.id === id); if (!d) return null; o.add('personas', { ...d }); }
+    }
+    return o.update(c, id, patch);
+  };
+  Store.remove = function (c, id) {
+    if (c === 'stock') { const s = BK.ld(); const n = s.parts.length; s.parts = s.parts.filter(x => x.id !== id); BK.sv(s); return s.parts.length < n; }
+    if (c === 'agenda') { const s = BK.ld(); const n = s.jobs.length + s.cancelados.length; s.jobs = s.jobs.filter(x => x.id !== id); s.cancelados = s.cancelados.filter(x => x.id !== id); BK.sv(s); return s.jobs.length + s.cancelados.length < n; }
+    if (c === 'servicios' && String(id).startsWith('j_')) { const s = BK.ld(); const n = s.jobs.length; s.jobs = s.jobs.filter(x => 'j_' + x.id !== id); BK.sv(s); return s.jobs.length < n; }
+    return o.remove(c, id);
+  };
+  const LOC = COLS.filter(c => !['stock', 'agenda'].includes(c));
+  Store.clearAll = function () { for (const c of LOC) { this.cache[c] = []; this._persist(c); } };
+  Store.replaceAll = function (data) { for (const c of LOC) { let a = Array.isArray(data[c]) ? data[c] : []; if (c === 'servicios') a = a.filter(x => !String(x.id).startsWith('j_')); if (c === 'personas') a = a.filter(x => !String(x.id).startsWith('c_')); this.cache[c] = a; this._persist(c); } };
+  Store.dump = function () { const d = {}; for (const c of COLS) d[c] = Store.all(c); return d; };
+})();
+
+/* Transacciones: lista de operaciones. Aplicar devuelve la transacción inversa (para deshacer). */
+function aplicarTx(tx) {
+  const inv = [];
+  for (const op of tx) {
+    if (op.op === 'add') { const d = Store.add(op.col, op.doc); inv.unshift({ op: 'del', col: op.col, id: d.id }); op.doc = d; }
+    else if (op.op === 'upd') {
+      const before = Store.get(op.col, op.id); if (!before) continue;
+      const prev = {}; for (const k of Object.keys(op.patch)) prev[k] = before[k];
+      Store.update(op.col, op.id, op.patch); inv.unshift({ op: 'upd', col: op.col, id: op.id, patch: prev });
+    } else if (op.op === 'del') {
+      const before = Store.get(op.col, op.id); if (!before) continue;
+      const copy = JSON.parse(JSON.stringify(before)); Store.remove(op.col, op.id); inv.unshift({ op: 'add', col: op.col, doc: copy });
+    }
+  }
+  return inv;
+}
+
+/* ============ Perfiles por rubro (el motor se adapta a cada app) ============ */
+const P = (es, en) => ({ es, en });
+const PERFILES = {
+  taller: {
+    id: 'taller', icono: '🚲',
+    L: {
+      es: { nombre: 'Taller de bicicletas', personas: 'clientes', persona: 'cliente', agenda: 'trabajos', agendaItem: 'trabajo', objeto: 'bici', servicios: 'reparaciones', servicio: 'reparación', acceso: 'visitas' },
+      en: { nombre: 'Bike repair shop', personas: 'customers', persona: 'customer', agenda: 'jobs', agendaItem: 'job', objeto: 'bike', servicios: 'repairs', servicio: 'repair', acceso: 'visits' }
+    },
+    modulos: ['chat', 'historial', 'agenda', 'stock', 'facturas', 'reportes', 'recordatorios', 'plantillas', 'alertas', 'whatsapp', 'importar'],
+    chips: [['📅 Hoy', 'qué trabajos tengo hoy'], ['📦 Stock bajo', 'stock bajo'], ['📊 Resumen', 'resumen del día'], ['⚠️ Alertas', 'alertas'], ['⏰ Recordatorios', 'mis recordatorios']]
+  },
+  club: {
+    id: 'club', icono: '🏟️',
+    L: {
+      es: { nombre: 'Club / establecimiento', personas: 'socios', persona: 'socio', agenda: 'reservas', agendaItem: 'reserva', objeto: 'cosa', servicios: 'cuotas y pagos', servicio: 'pago', acceso: 'ingresos' },
+      en: { nombre: 'Club / venue', personas: 'members', persona: 'member', agenda: 'bookings', agendaItem: 'booking', objeto: 'item', servicios: 'fees and payments', servicio: 'payment', acceso: 'entries' }
+    },
+    modulos: ['chat', 'historial', 'accesos', 'agenda', 'reportes', 'recordatorios', 'plantillas', 'alertas', 'whatsapp', 'importar'],
+    chips: [['👥 Quién queda', 'quién queda adentro'], ['⬇️ Ingresaron hoy', 'cuántos ingresaron hoy'], ['⬆️ Egresaron hoy', 'cuántos egresaron hoy'], ['📊 Resumen', 'resumen del día'], ['⚠️ Alertas', 'alertas']]
+  },
+  barberia: {
+    id: 'barberia', icono: '💈',
+    L: {
+      es: { nombre: 'Barbería / peluquería', personas: 'clientes', persona: 'cliente', agenda: 'turnos', agendaItem: 'turno', objeto: 'servicio', servicios: 'servicios realizados', servicio: 'servicio', acceso: 'visitas' },
+      en: { nombre: 'Barbershop / salon', personas: 'clients', persona: 'client', agenda: 'appointments', agendaItem: 'appointment', objeto: 'service', servicios: 'services done', servicio: 'service', acceso: 'visits' }
+    },
+    modulos: ['chat', 'historial', 'agenda', 'stock', 'reportes', 'recordatorios', 'plantillas', 'alertas', 'whatsapp', 'importar'],
+    chips: [['📅 Turnos de hoy', 'qué turnos tengo hoy'], ['📅 Mañana', 'qué turnos tengo mañana'], ['📊 Resumen', 'resumen del día'], ['⚠️ Alertas', 'alertas']]
+  },
+  comercio: {
+    id: 'comercio', icono: '🏪',
+    L: {
+      es: { nombre: 'Comercio / repuestos', personas: 'clientes', persona: 'cliente', agenda: 'entregas', agendaItem: 'entrega', objeto: 'producto', servicios: 'ventas', servicio: 'venta', acceso: 'visitas' },
+      en: { nombre: 'Shop / parts store', personas: 'customers', persona: 'customer', agenda: 'deliveries', agendaItem: 'delivery', objeto: 'product', servicios: 'sales', servicio: 'sale', acceso: 'visits' }
+    },
+    modulos: ['chat', 'historial', 'agenda', 'stock', 'facturas', 'reportes', 'recordatorios', 'plantillas', 'alertas', 'whatsapp', 'importar'],
+    chips: [['📦 Stock bajo', 'stock bajo'], ['📊 Resumen', 'resumen del día'], ['📅 Entregas de hoy', 'qué entregas tengo hoy'], ['⚠️ Alertas', 'alertas']]
+  }
+};
+
+const MODULOS = {
+  chat: P('Chat: consultar y agregar datos', 'Chat: query and add data'),
+  historial: P('Historial y búsquedas', 'History and lookups'),
+  accesos: P('Ingresos y egresos', 'Entries and exits'),
+  agenda: P('Agenda y turnos', 'Agenda and appointments'),
+  stock: P('Stock y precios', 'Stock and prices'),
+  facturas: P('Leer facturas y fotos', 'Read invoices and photos'),
+  reportes: P('Reportes y resúmenes', 'Reports and summaries'),
+  recordatorios: P('Recordatorios', 'Reminders'),
+  plantillas: P('Respuestas guardadas y presupuestos', 'Saved replies and quotes'),
+  alertas: P('Alertas automáticas', 'Automatic alerts'),
+  whatsapp: P('Mandar por WhatsApp', 'Send via WhatsApp'),
+  importar: P('Importar planillas', 'Import spreadsheets')
+};
+
+/* Datos de ejemplo (fechas relativas a hoy, así la demo siempre tiene "hoy") */
+function cargarDemo(perfil) { if (window.BIKE_MODE) return;
+  Store.clearAll();
+  const d = n => addDays(n);
+  const per = (nombre, tel, extra) => Store.add('personas', { nombre, telefono: tel || '', alias: [], nota: '', ...extra });
+  const nombres = [
+    ['Juan Pérez', '3492123456'], ['Carlos Pérez', '3492654321'], ['María Gómez', '3492111222'], ['Lucas Fernández', '3492333444'],
+    ['Ana Torres', '3492555666'], ['Roberto Díaz', '3492777888'], ['Sofía Ruiz', '3492999000'], ['Martín López', '3492121212']
+  ];
+  const P_ = {};
+  nombres.forEach(([n, t], i) => { P_[n] = per(n, t, perfil === 'club' ? { nro: String(100 + i * 17) } : perfil === 'taller' ? { nota: ['Venzo rodado 29', 'BMX', 'Trek 820', 'Mountain bike', 'Urbana', 'Ruta', 'Plegable', 'Venzo rodado 26'][i] } : {}) });
+  const ag = (dia, hora, n, det, estado) => Store.add('agenda', { fecha: d(dia), hora, personaId: P_[n].id, personaNombre: n, titulo: det, estado });
+  const sv = (dias, n, obj, det, imp, pag) => Store.add('servicios', { fecha: d(-dias), personaId: P_[n].id, personaNombre: n, objeto: obj, detalle: det, importe: imp, pagado: pag });
+  const st = (nombre, cant, precio, min) => Store.add('stock', { nombre, cantidad: cant, precio, minimo: min });
+
+  if (perfil === 'taller' || perfil === 'comercio') {
+    if (perfil === 'taller') {
+      [['Cámara 26', 12, 3500, 5], ['Cámara 29', 4, 3900, 5], ['Cubierta 26', 6, 12000, 3], ['Cadena 9 velocidades', 3, 8500, 4], ['Pastillas de freno', 15, 4200, 6], ['Aceite lubricante', 8, 2900, 4], ['Cambio trasero Shimano', 2, 38000, 2], ['Pedales', 5, 9500, 2], ['Asiento', 3, 14000, 2], ['Grasa', 0, 2500, 3], ['Cable de freno', 20, 800, 10], ['Filtro de aceite', 6, 6800, 3]].forEach(x => st(...x));
+    } else {
+      [['Filtro de aceite', 9, 6800, 4], ['Filtro de aire', 3, 7900, 4], ['Pastillas de freno', 14, 21000, 6], ['Aceite 10W40 1L', 25, 11500, 10], ['Bujía', 7, 5200, 8], ['Correa distribución', 2, 34000, 2], ['Lámpara H4', 18, 3100, 6], ['Batería 12V', 4, 98000, 2]].forEach(x => st(...x));
+    }
+  }
+  if (perfil === 'barberia') [['Cera para pelo', 7, 6500, 3], ['Shampoo', 4, 5200, 4], ['Aceite para barba', 2, 7800, 3]].forEach(x => st(...x));
+
+  if (perfil === 'taller') {
+    ag(0, '09:00', 'Juan Pérez', 'Service completo', 'confirmado'); ag(0, '11:30', 'María Gómez', 'Cambio de cámara', 'pendiente'); ag(0, '16:00', 'Lucas Fernández', 'Frenos', 'confirmado');
+    ag(1, '10:00', 'Ana Torres', 'Ajuste de cambios', 'pendiente'); ag(1, '15:00', 'Carlos Pérez', 'Cambio de cadena', 'confirmado'); ag(3, '09:30', 'Martín López', 'Service básico', 'pendiente');
+    sv(40, 'Juan Pérez', 'Venzo rodado 29', 'Service completo', 25000, true); sv(120, 'Juan Pérez', 'Venzo rodado 29', 'Cambio de cubierta trasera', 14500, true);
+    sv(20, 'Carlos Pérez', 'BMX', 'Cambio de cadena y piñón', 21000, false); sv(9, 'María Gómez', 'Trek 820', 'Alineado de rueda', 6000, true);
+    sv(5, 'Lucas Fernández', 'Mountain bike', 'Cambio de pastillas', 7000, true); sv(60, 'Ana Torres', 'Urbana', 'Service básico', 15000, true); sv(2, 'Roberto Díaz', 'Ruta', 'Cambio de cámara', 3500, true); sv(0, 'Sofía Ruiz', 'Plegable', 'Ajuste de frenos', 4000, false);
+    Store.add('recordatorios', { cuando: d(0) + 'T18:00', texto: 'Llamar al proveedor de cubiertas', hecho: false });
+  } else if (perfil === 'barberia') {
+    ag(0, '10:00', 'Juan Pérez', 'Corte', 'confirmado'); ag(0, '11:00', 'Carlos Pérez', 'Corte y barba', 'pendiente'); ag(0, '17:30', 'Martín López', 'Barba', 'confirmado'); ag(1, '10:30', 'Lucas Fernández', 'Corte', 'pendiente');
+    sv(7, 'Juan Pérez', 'Corte', 'Corte', 5000, true); sv(21, 'Juan Pérez', 'Corte', 'Corte y barba', 7500, true); sv(14, 'Carlos Pérez', 'Corte', 'Corte', 5000, true); sv(3, 'Lucas Fernández', 'Barba', 'Barba', 3000, true); sv(1, 'Martín López', 'Corte', 'Corte', 5000, false);
+  } else if (perfil === 'comercio') {
+    ag(0, '12:00', 'Juan Pérez', 'Entrega de pastillas de freno', 'pendiente'); ag(1, '09:00', 'María Gómez', 'Entrega de batería 12V', 'confirmado');
+    sv(2, 'Juan Pérez', 'Pastillas de freno', 'Venta: 2 pastillas de freno', 42000, true); sv(6, 'Carlos Pérez', 'Aceite 10W40 1L', 'Venta: 4 aceite 10W40', 46000, false); sv(0, 'Ana Torres', 'Bujía', 'Venta: 4 bujías', 20800, true);
+  } else if (perfil === 'club') {
+    ag(0, '18:00', 'Juan Pérez', 'Cancha de pádel 1', 'confirmado'); ag(0, '19:30', 'María Gómez', 'Cancha de pádel 2', 'pendiente'); ag(1, '20:00', 'Lucas Fernández', 'Cancha de fútbol 5', 'confirmado');
+    sv(10, 'Juan Pérez', 'Cuota', 'Cuota de octubre', 15000, true); sv(10, 'Carlos Pérez', 'Cuota', 'Cuota de octubre', 15000, false); sv(0, 'María Gómez', 'Cuota', 'Cuota de noviembre', 15000, true);
+    const ac = (dia, hora, tipo, n, con) => Store.add('accesos', { fecha: d(dia), hora, tipo, personaId: P_[n] ? P_[n].id : null, personaNombre: n, categoria: P_[n] ? 'socio' : 'visita', conQuien: con || '' });
+    ac(0, '08:10', 'ingreso', 'Juan Pérez', 'Marta Pérez (invitada)'); ac(0, '09:00', 'ingreso', 'María Gómez'); ac(0, '09:30', 'ingreso', 'Lucas Fernández', 'Pablo Ruiz (visita)');
+    ac(0, '11:15', 'egreso', 'María Gómez'); ac(0, '12:40', 'ingreso', 'Carlos Pérez'); ac(0, '13:05', 'ingreso', 'Sofía Ruiz', 'Martín López');
+    ac(-1, '10:00', 'ingreso', 'Juan Pérez'); ac(-1, '12:30', 'egreso', 'Juan Pérez'); ac(-1, '20:00', 'ingreso', 'Roberto Díaz'); ac(-2, '17:45', 'ingreso', 'Carlos Pérez', 'Juan Pérez'); ac(-2, '19:20', 'egreso', 'Carlos Pérez');
+  }
+  if (perfil === 'taller' || perfil === 'comercio') {
+    Store.add('facturas', { fecha: d(-6), proveedor: perfil === 'taller' ? 'Distribuidora BiciParts' : 'Repuestos del Sur', items: [{ nombre: perfil === 'taller' ? 'Cámara 26' : 'Filtro de aceite', cantidad: 10, precio: perfil === 'taller' ? 2800 : 5400 }], total: perfil === 'taller' ? 28000 : 54000, estado: 'aplicada' });
+  }
+  Store.add('plantillas', { nombre: 'recordatorio de turno', texto: 'Hola {nombre}, te recordamos tu cita en {negocio}. ¡Te esperamos!' });
+}
+
+/* ============ Configuración, usuarios, licencia ============ */
+const L = (es, en) => (typeof Cfg !== 'undefined' && Cfg.idioma === 'en') ? en : es;
+const SECRETO_LICENCIA = 'CAMBIAR-ESTE-SECRETO-ANTES-DE-VENDER';
+const todosModulos = () => Object.fromEntries(Object.keys(MODULOS).map(k => [k, true]));
+
+const CFG_DEF = () => ({
+  perfil: 'taller', negocio: 'BIKE MPV', logo: '', color: '#3b82f6',
+  asistente: 'Rafa', idioma: 'es', tono: 'corto',
+  voz: { hablar: true, voiceURI: '', velocidad: 1, volumen: 1, fraseActiva: false, fraseTexto: '' },
+  ia: { modo: 'reglas', key: '', modelo: 'gemini-flash-latest' },
+  modulos: todosModulos(),
+  resumenAuto: false, resumenHablado: false,
+  tema: 'auto', letraGrande: false,
+  usuarios: [
+    { id: 'u1', nombre: 'Dueño', rol: 'dueno', modulos: [] },
+    { id: 'u2', nombre: 'Empleado', rol: 'empleado', modulos: ['chat', 'historial', 'accesos', 'agenda', 'stock', 'recordatorios', 'alertas', 'whatsapp'] }
+  ],
+  usuarioActual: 'u1', pinHash: '', licencia: '', chips: null, prefijoTel: '549', margen: 40, firebase: { config: '', email: '' }, demoCargada: false
+});
+
+const Cfg = (() => {
+  const base = CFG_DEF(); const g = lsGet('motor_cfg', {});
+  const merge = (a, b) => { for (const k of Object.keys(b || {})) { if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object') merge(a[k], b[k]); else a[k] = b[k]; } return a; };
+  return merge(base, g);
+})();
+const guardarCfg = () => lsSet('motor_cfg', Cfg);
+
+const Auth = {
+  usuario() { return Cfg.usuarios.find(u => u.id === Cfg.usuarioActual) || Cfg.usuarios[0]; },
+  esDueno() { return this.usuario().rol === 'dueno'; },
+  puede(mod) { return this.esDueno() || (this.usuario().modulos || []).includes(mod); }
+};
+
+/* Licencia: código = base64url(JSON) + "." + firma. Sin licencia = modo demo (todo activo, con aviso). */
+const Licencia = {
+  datos: null, estado: 'demo',
+  async verificar(codigo) {
+    try {
+      const [p, f] = String(codigo || '').trim().split('.');
+      if (!p || !f) return { ok: false, motivo: L('Código inválido', 'Invalid code') };
+      const firma = (await hmacHex(SECRETO_LICENCIA, p)).slice(0, 20);
+      if (firma !== f) return { ok: false, motivo: L('Código inválido', 'Invalid code') };
+      const d = safeJSON(unb64u(p), null); if (!d) return { ok: false, motivo: L('Código inválido', 'Invalid code') };
+      if (d.v && d.v < todayIso()) return { ok: false, motivo: L('Licencia vencida el ', 'License expired on ') + fmtFechaCorta(d.v), datos: d };
+      return { ok: true, datos: d };
+    } catch (_) { return { ok: false, motivo: L('Código inválido', 'Invalid code') }; }
+  },
+  async aplicar() {
+    if (!Cfg.licencia) { this.datos = null; this.estado = 'demo'; return; }
+    const r = await this.verificar(Cfg.licencia);
+    if (r.ok) { this.datos = r.datos; this.estado = 'ok'; }
+    else { this.datos = r.datos || null; this.estado = r.datos ? 'vencida' : 'invalida'; }
+  },
+  permite(mod) { if (this.estado === 'demo') return true; if (this.estado !== 'ok') return false; return !this.datos.m || this.datos.m.includes(mod); },
+  async generar(cliente, vence, modulos) {
+    const p = b64u(JSON.stringify({ c: cliente, v: vence || '', m: modulos && modulos.length ? modulos : null }));
+    return p + '.' + (await hmacHex(SECRETO_LICENCIA, p)).slice(0, 20);
+  }
+};
+const moduloActivo = (m) => !!Cfg.modulos[m] && Licencia.permite(m) && (PERFILES[Cfg.perfil] ? true : true);
+const lab = (k) => (PERFILES[Cfg.perfil] ? PERFILES[Cfg.perfil].L[Cfg.idioma] || PERFILES[Cfg.perfil].L.es : PERFILES.taller.L.es)[k];
+
+/* ============ Voz: hablarle y que te hable (opcional) ============ */
+const Voz = {
+  SR: window.SpeechRecognition || window.webkitSpeechRecognition,
+  rec: null, escuchando: false, manosLibres: false, hablando: false, onTexto: null, onEstado: null,
+  soportaEntrada() { return !!this.SR; },
+  soportaSalida() { return 'speechSynthesis' in window; },
+  langCode() { return Cfg.idioma === 'en' ? 'en-US' : 'es-AR'; },
+  voces() { try { return speechSynthesis.getVoices() || []; } catch (_) { return []; } },
+  vocesDelIdioma() {
+    const l = Cfg.idioma === 'en' ? 'en' : 'es';
+    return this.voces().filter(v => (v.lang || '').toLowerCase().startsWith(l));
+  },
+  limpiar(t) {
+    return String(t).replace(/<[^>]+>/g, ' ').replace(/[*_`#>]/g, '').replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '')
+      .replace(/\$\s?([\d.,]+)/g, (m, n) => n + ' pesos').replace(/\s+/g, ' ').trim();
+  },
+  hablar(texto, forzar) {
+    if (!this.soportaSalida() || !(Cfg.voz.hablar || forzar)) { this._despuesDeHablar(); return; }
+    const t = this.limpiar(texto); if (!t) { this._despuesDeHablar(); return; }
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(t.slice(0, 600));
+      u.lang = this.langCode();
+      const v = this.voces().find(x => x.voiceURI === Cfg.voz.voiceURI);
+      if (v) { u.voice = v; u.lang = v.lang; }
+      u.rate = Cfg.voz.velocidad || 1; u.volume = Cfg.voz.volumen == null ? 1 : Cfg.voz.volumen;
+      this.hablando = true;
+      if (this.escuchando && this.rec) { try { this.rec.stop(); } catch (_) {} }
+      u.onend = u.onerror = () => { this.hablando = false; this._despuesDeHablar(); };
+      speechSynthesis.speak(u);
+    } catch (_) { this.hablando = false; this._despuesDeHablar(); }
+  },
+  parar() { try { speechSynthesis.cancel(); } catch (_) {} this.hablando = false; },
+  _despuesDeHablar() { if (this.manosLibres && !this.escuchando) setTimeout(() => this.escuchar(true), 250); },
+
+  /* Palabra de activación (opcional): solo se usa en manos libres */
+  frase() { return norm(Cfg.voz.fraseTexto || ('oye ' + Cfg.asistente)); },
+  /* Devuelve el texto sin la frase, '' si solo dijo la frase, o null si no la dijo */
+  aplicarFrase(texto) {
+    if (!(this.manosLibres && Cfg.voz.fraseActiva)) return texto;
+    const q = norm(texto), f = this.frase();
+    const i = q.indexOf(f);
+    if (i >= 0) return q.slice(i + f.length).replace(/^[\s,.:;!-]+/, '');
+    return null;
+  },
+
+  escuchar(continuo) {
+    if (!this.SR) { if (this.onEstado) this.onEstado('nosoporte'); return; }
+    if (this.escuchando) return;
+    const r = new this.SR();
+    r.lang = this.langCode(); r.interimResults = true; r.continuous = false; r.maxAlternatives = 1;
+    let final = '';
+    r.onstart = () => { this.escuchando = true; if (this.onEstado) this.onEstado('escuchando'); };
+    r.onresult = (ev) => {
+      let interim = '';
+      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+        const t = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal) final += t; else interim += t;
+      }
+      if (this.onEstado) this.onEstado('parcial', final + interim);
+    };
+    r.onerror = (e) => { if (this.onEstado) this.onEstado('error', e.error); if (e.error === 'not-allowed' || e.error === 'service-not-allowed') this.manosLibres = false; };
+    r.onend = () => {
+      this.escuchando = false;
+      const t = final.trim(); final = '';
+      if (this.onEstado) this.onEstado('fin');
+      if (t) { const u = this.aplicarFrase(t); if (u === null) { if (this.manosLibres && !this.hablando) setTimeout(() => this.escuchar(true), 300); } else if (u === '') { this.hablar(Cfg.idioma === 'en' ? 'Yes?' : 'Decime.', true); } else if (this.onTexto) this.onTexto(u, true); }
+      else if (this.manosLibres && !this.hablando) setTimeout(() => this.escuchar(true), 400);
+    };
+    this.rec = r;
+    try { r.start(); } catch (_) {}
+  },
+  detener() { this.manosLibres = false; try { if (this.rec) this.rec.stop(); } catch (_) {} this.escuchando = false; this.parar(); if (this.onEstado) this.onEstado('fin'); },
+  alternarManosLibres() {
+    this.manosLibres = !this.manosLibres;
+    if (this.manosLibres) { this.escuchar(true); } else this.detener();
+    return this.manosLibres;
+  }
+};
+
+/* ============ IA opcional: Gemma local (MediaPipe) o en línea (Gemini). Sin IA, el motor igual funciona con reglas ============ */
+const MP_VER = '0.10.27';
+const IA = {
+  llm: null, estado: 'sin modelo', cargando: false,
+
+  /* ---- guardar el archivo del modelo en el navegador para no elegirlo cada vez ---- */
+  _idb() {
+    return new Promise((res, rej) => {
+      const r = indexedDB.open('motor-ia', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    });
+  },
+  async _kvGet(k) { try { const db = await this._idb(); return await new Promise(res => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); } catch (_) { return null; } },
+  async _kvSet(k, v) { try { const db = await this._idb(); await new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); return true; } catch (_) { return false; } },
+
+  async cargarLocal(file) {
+    if (this.cargando) return;
+    this.cargando = true; this.estado = 'cargando modelo…'; UI && UI.estadoIA();
+    try {
+      let mod;
+      try { mod = await import(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@${MP_VER}/genai_bundle.mjs`); }
+      catch (_) { mod = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai'); }
+      const { FilesetResolver, LlmInference } = mod;
+      const genai = await FilesetResolver.forGenAiTasks(`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-genai@${MP_VER}/wasm`);
+      let blob = file;
+      if (!blob) blob = await this._kvGet('modelo');
+      if (!blob) throw new Error('Elegí el archivo del modelo (.task o .litertlm).');
+      if (file) await this._kvSet('modelo', file);
+      this.llm = await LlmInference.createFromOptions(genai, {
+        baseOptions: { modelAssetBuffer: blob.stream().getReader() },
+        maxTokens: 1024, topK: 40, temperature: 0.2, randomSeed: 7
+      });
+      this.estado = 'listo (' + (blob.name || 'modelo guardado') + ')';
+    } catch (e) {
+      this.llm = null; this.estado = 'error: ' + (e.message || e);
+    }
+    this.cargando = false; UI && UI.estadoIA();
+  },
+  async autoCargarLocal() { if (Cfg.ia.modo === 'local' || Cfg.ia.modo === 'local+online') { const b = await this._kvGet('modelo'); if (b) this.cargarLocal(null); } },
+
+  async _local(prompt) {
+    if (!this.llm) throw new Error('Gemma local no está cargado');
+    const p = `<start_of_turn>user\n${prompt}<end_of_turn>\n<start_of_turn>model\n`;
+    return String(await this.llm.generateResponse(p)).trim();
+  },
+  async _online(prompt, imagenes) {
+    const k = Cfg.ia.key; if (!k) throw new Error('Falta la clave de la API');
+    const parts = [{ text: prompt }];
+    for (const im of (imagenes || [])) { const m = String(im).match(/^data:(.+?);base64,(.+)$/); if (m) parts.push({ inline_data: { mime_type: m[1], data: m[2] } }); }
+    const base = 'https://generativelanguage.googleapis.com/v1beta/';
+    const llamar = (mod) => fetch(base + 'models/' + encodeURIComponent(mod) + ':generateContent', {
+      signal: AbortSignal.timeout(14000), method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': k },
+      body: JSON.stringify({ contents: [{ role: 'user', parts }], generationConfig: { temperature: 0.2 } })
+    });
+    let r; const seguro = async (m) => { try { return await llamar(m); } catch (e) { return { ok: false, status: 0, json: async () => ({ error: { message: e.name === 'TimeoutError' ? 'tardó demasiado' : e.message } }) }; } };
+    r = await seguro(Cfg.ia.modelo || 'gemini-flash-latest');
+    if (!r.ok && [0, 404, 429, 500, 503].includes(r.status)) {
+      /* modelo inexistente o saturado: probar otros disponibles (primero los "lite" y los de nombre fijo) */
+      const probados = [Cfg.ia.modelo || 'gemini-flash-latest'];
+      let cand = ['gemini-flash-lite-latest'];
+      try {
+        const lr = await fetch(base + 'models?pageSize=200', { signal: AbortSignal.timeout(15000), headers: { 'x-goog-api-key': k } });
+        if (lr.ok) {
+          const ms = ((await lr.json()).models || []).filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /^models\/gemini-[\d.]+-flash(-lite)?$/.test(m.name));
+          ms.sort((x, y) => parseFloat(y.name.match(/gemini-([\d.]+)/)[1]) - parseFloat(x.name.match(/gemini-([\d.]+)/)[1]) || (x.name.includes('lite') ? 1 : -1));
+          cand = cand.concat(ms.map(m => m.name.replace('models/', '')));
+        }
+      } catch (_) {}
+      for (const nuevo of cand) {
+        if (probados.includes(nuevo) || probados.length > 3) continue; probados.push(nuevo);
+        const r2 = await seguro(nuevo); if (r2.ok) { r = r2; Cfg.ia.modelo = nuevo; guardarCfg(); break; } r = r2;
+      }
+    }
+    if (!r.ok) { let d = ''; try { d = ((await r.json()).error || {}).message || ''; } catch (_) {} throw new Error('IA en línea: error ' + r.status + (d ? ' (' + d.slice(0, 90) + ')' : '')); }
+    const j = await r.json();
+    const t = j.candidates && j.candidates[0] && j.candidates[0].content && j.candidates[0].content.parts;
+    return (t || []).map(x => x.text || '').join('').trim();
+  },
+  hayLocal() { return !!this.llm; },
+  hayOnline() { return !!Cfg.ia.key; },
+  activa() {
+    const m = Cfg.ia.modo;
+    if (m === 'reglas') return false;
+    if (m === 'local') return this.hayLocal();
+    if (m === 'online') return this.hayOnline();
+    return this.hayLocal() || this.hayOnline();
+  },
+  puedeVer() { return Cfg.ia.modo !== 'reglas' && Cfg.ia.modo !== 'local' && this.hayOnline(); },
+  async generar(prompt, imagenes) {
+    const m = Cfg.ia.modo;
+    if (imagenes && imagenes.length) return this._online(prompt, imagenes);
+    if (m === 'local') return this._local(prompt);
+    if (m === 'online') return this._online(prompt);
+    if (m === 'local+online') { try { if (this.hayLocal()) return await this._local(prompt); } catch (_) {} return this._online(prompt); }
+    throw new Error('IA apagada');
+  },
+  json(t) { const m = String(t).match(/\{[\s\S]*\}|\[[\s\S]*\]/); if (!m) return null; return safeJSON(m[0], null); },
+
+  /* El LLM solo reescribe el pedido con una frase-modelo; después lo ejecutan las mismas reglas (y el mismo "¿Confirmo?"). */
+  async reescribir(texto, ejemplos) {
+    const p = `Sos el intérprete de un asistente de negocio. Reescribí el pedido del usuario como UNA sola de estas frases-modelo (misma estructura, mismos nombres propios, fechas como "hoy", "mañana", "viernes" o dd/mm, horas como 15:30). Si el pedido no se parece a ninguna, respondé exactamente NINGUNA. No inventes datos. Respondé solo la frase.\n\nFrases-modelo:\n${ejemplos.map(e => '- ' + e).join('\n')}\n\nPedido: ${texto}\nFrase:`;
+    const r = (await this.generar(p)).split('\n')[0].replace(/^[-*\s"]+|["\s]+$/g, '');
+    if (!r || /^ninguna/i.test(r)) return null;
+    return r;
+  },
+  async responderConDatos(pregunta, datos) {
+    const p = `Respondé la pregunta usando SOLO los datos de abajo. Si la respuesta no está en los datos, respondé exactamente: "No tengo ese dato." Respuesta corta y directa, en ${Cfg.idioma === 'en' ? 'inglés' : 'español argentino'}. No inventes nada.\n\nDatos:\n${datos}\n\nPregunta: ${pregunta}\nRespuesta:`;
+    return (await this.generar(p)).trim();
+  },
+  async leerFactura(dataUrl) {
+    const p = 'Leé esta factura o remito de compra. Respondé SOLO un JSON con esta forma: {"proveedor":"","fecha":"YYYY-MM-DD","items":[{"nombre":"","cantidad":0,"precio":0}],"total":0}. "precio" es el precio unitario. Si un dato no se lee, dejalo vacío o en 0. No inventes.';
+    return this.json(await this._online(p, [dataUrl]));
+  },
+  async describirCosa(dataUrl) {
+    const p = 'Describí en una frase corta qué objeto o pieza se ve en la foto (marca/modelo si se lee). Si no estás seguro, decilo. No inventes.';
+    return (await this._online(p, [dataUrl])).trim();
+  }
+};
+
+/* ============ NÚCLEO DEL MOTOR: interpreta pedidos (es/en), confirma antes de guardar, deshace, recuerda ============ */
+const R = (text, x) => ({ text, ...(x || {}) });
+const ctx = { pending: null, choice: null, lastChoice: null, last: null, undo: [], redo: [], lastBot: '', lastReportData: null };
+const nombreUsuario = () => Auth.usuario().nombre;
+const rel = (f) => f === todayIso() ? L('hoy', 'today') : f === addDays(1) ? L('mañana', 'tomorrow') : f === addDays(-1) ? L('ayer', 'yesterday') : fmtFecha(f, Cfg.idioma);
+const relCap = f => { const r = rel(f); return r.charAt(0).toUpperCase() + r.slice(1); };
+const plural = (n, s, p) => n === 1 ? s : p;
+
+/* ---------- búsqueda de personas y productos dentro de una frase ---------- */
+function hitTokens(q, name) {
+  const qt = toks(q), nt = sigToks(name); let hit = 0, strong = 0; const usados = [];
+  for (const t of nt) { let best = 0, bq = ''; for (const x of qt) { const e = tokEq(x, t); if (e > best) { best = e; bq = x; } } hit += best; if (best >= 0.8) { strong++; usados.push(bq); } }
+  return { score: nt.length ? hit / nt.length : 0, strong, total: nt.length, usados };
+}
+function personasEn(q) {
+  const out = [];
+  for (const p of Store.all('personas')) {
+    let h = hitTokens(q, p.nombre), s = h.score, ok = h.strong >= 1, term = h.usados.join(' ');
+    for (const a of (p.alias || [])) { const na = norm(a); if (na && (' ' + q + ' ').includes(' ' + na + ' ')) { s = Math.max(s, 1); ok = true; term = na; } }
+    if (ok) out.push({ p, s, term });
+  }
+  out.sort((a, b) => b.s - a.s);
+  const mx = out.length ? out[0].s : 0;
+  const top = out.filter(x => x.s >= mx - 0.001);
+  top.forEach(x => x.p._term = x.term);
+  return top.map(x => x.p);
+}
+function productosEn(q, min) {
+  const out = [];
+  for (const it of Store.all('stock')) { const h = hitTokens(q, it.nombre); if (h.strong >= 1 && h.score >= (min || 0.5)) out.push({ it, s: h.score }); }
+  out.sort((a, b) => b.s - a.s);
+  const mx = out.length ? out[0].s : 0;
+  return out.filter(x => x.s >= mx - 0.001).map(x => x.it);
+}
+const quitarPersona = (q, p) => { const n = sigToks(p.nombre); return toks(q).filter(t => !n.some(x => tokEq(t, x) >= 0.8)).join(' '); };
+
+
+/* Si el pedido trae un nombre completo (2+ palabras con mayúscula) que no coincide del todo con ninguna ficha, lo trata como persona nueva (no adivina). */
+function nombreNuevoExplicito(raw) {
+  const m = String(raw).replace(/^\s*\S+\s+/, '').match(/[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)+/);
+  if (!m) return null;
+  const st = sigToks(m[0]);
+  const conocida = Store.all('personas').some(p => { const nt = sigToks(p.nombre); return st.every(t => nt.some(x => tokEq(t, x) >= 0.8)); });
+  return conocida ? null : m[0];
+}
+
+
+/* Devuelve el detalle con las mayúsculas y tildes originales (a partir del texto normalizado que sobró) */
+function detalleLimpio(restNorm, raw, persona) {
+  const usados = new Set(); const rawWords = String(raw).split(/\s+/);
+  let toksR = String(restNorm).split(/\s+/).filter(Boolean);
+  if (persona) { const pn = sigToks(persona.nombre || persona); toksR = toksR.filter(t => !pn.some(x => tokEq(t, x) >= 0.8)); }
+  while (toksR.length && /^(para|a|de|con|for|to|with|el|la|al|on|at|in|the|an)$/.test(toksR[0])) toksR.shift();
+  const out = toksR.map(t => { const i = rawWords.findIndex((w, k) => !usados.has(k) && norm(w.replace(/[.,;:!?¿¡]/g, '')) === t); if (i >= 0) { usados.add(i); return rawWords[i].replace(/[.,;:!?¿¡]/g, ''); } return t; });
+  const r = out.join(' ').trim(); return r ? r.charAt(0).toUpperCase() + r.slice(1) : '';
+}
+
+/* ---------- confirmar antes de guardar / deshacer ---------- */
+function proponer(texto, tx, opts) {
+  opts = opts || {};
+  ctx.pending = { texto, tx, desc: opts.desc || texto, despues: opts.despues };
+  return R(texto + '\n' + L('¿Confirmo?', 'Shall I confirm?'), {
+    propuesta: true,
+    buttons: [{ label: L('Sí ✅', 'Yes ✅'), run: () => confirmar(true) }, { label: L('No ❌', 'No ❌'), run: () => confirmar(false) }]
+  });
+}
+function confirmar(si) {
+  const p = ctx.pending; ctx.pending = null;
+  if (!p) return R(L('No hay nada pendiente de confirmar.', 'Nothing is waiting for confirmation.'));
+  if (!si) return R(L('Listo, cancelado. No guardé nada.', 'Cancelled. Nothing was saved.'));
+  const inv = aplicarTx(p.tx);
+  ctx.undo.push({ desc: p.desc, inv }); ctx.redo = [];
+  Store.add('log', { ts: new Date().toISOString(), user: nombreUsuario(), texto: p.desc });
+  const extra = p.despues ? p.despues(p.tx) : '';
+  return R((Cfg.tono === 'amigable' ? L('¡Listo! ✅ ', 'Done! ✅ ') : L('Hecho. ', 'Done. ')) + (extra || ''), {
+    refrescar: true, buttons: [{ label: L('↩️ Deshacer', '↩️ Undo'), run: () => deshacer() }]
+  });
+}
+function deshacer() {
+  const u = ctx.undo.pop();
+  if (!u) return R(L('No hay nada para deshacer.', 'Nothing to undo.'));
+  const redo = aplicarTx(u.inv); ctx.redo.push({ desc: u.desc, inv: redo });
+  Store.add('log', { ts: new Date().toISOString(), user: nombreUsuario(), texto: '↩️ ' + L('Deshecho: ', 'Undone: ') + u.desc });
+  return R(L('Deshecho: ', 'Undone: ') + u.desc, { refrescar: true, buttons: [{ label: L('Rehacer', 'Redo'), run: () => rehacer() }] });
+}
+function rehacer() {
+  const u = ctx.redo.pop();
+  if (!u) return R(L('No hay nada para rehacer.', 'Nothing to redo.'));
+  const inv = aplicarTx(u.inv); ctx.undo.push({ desc: u.desc, inv });
+  return R(L('Rehecho: ', 'Redone: ') + u.desc, { refrescar: true });
+}
+
+/* ---------- elegir entre varias opciones ---------- */
+function elegir(lista, etiqueta, cont, termino) {
+  ctx.choice = { lista, etiqueta, cont, termino };
+  const n = lista.length;
+  return R(L(`Encontré ${n}. ¿Cuál? `, `I found ${n}. Which one? `) + lista.slice(0, 6).map((x, i) => `${i + 1}) ${etiqueta(x)}`).join('  '), {
+    buttons: lista.slice(0, 6).map((x, i) => ({ label: `${i + 1}. ${etiqueta(x)}`, run: () => elegirIdx(i) }))
+  });
+}
+function elegirIdx(i) {
+  const c = ctx.choice; if (!c) return R(L('No hay nada para elegir.', 'Nothing to choose.'));
+  ctx.choice = null; ctx.lastChoice = { ...c, i };
+  const it = c.lista[i];
+  let r = c.cont(it);
+  if (c.termino && it && it.nombre && it.alias !== undefined && norm(it.nombre) !== c.termino && !(it.alias || []).map(norm).includes(c.termino) && c.termino.length >= 3) {
+    const t = c.termino;
+    const sug = R(L(`¿Querés que recuerde que “${t}” es ${it.nombre}?`, `Want me to remember that “${t}” means ${it.nombre}?`), {
+      buttons: [{ label: L('Sí, recordar', 'Yes, remember'), run: () => { Store.update('personas', it.id, { alias: [...(it.alias || []), t] }); return R(L(`Anotado: “${t}” = ${it.nombre}.`, `Noted: “${t}” = ${it.nombre}.`)); } }, { label: L('No', 'No'), run: () => R(L('Ok.', 'Ok.')) }]
+    });
+    r = [].concat(r, sug);
+  }
+  return r;
+}
+function conPersona(q, cont) {
+  const c = personasEn(q);
+  if (c.length === 1) return cont(c[0]);
+  if (c.length > 1) return elegir(c, p => p.nombre + (p.nota ? ' · ' + p.nota : ''), cont, c[0]._term);
+  return null;
+}
+const noEncontre = (nombre, cosa) => R(L(`No encuentro ${cosa || 'a'} “${nombre}”.`, `I can't find ${cosa || ''} “${nombre}”.`));
+
+/* ---------- ejemplos (sirven de ayuda y de guía para la IA) ---------- */
+const EJEMPLOS = {
+  chat: [P('Juan Pérez es cliente?', 'Is Juan Pérez a customer?'), P('Agregar cliente Juan Pérez 3492123456', 'Add customer Juan Pérez 3492123456'), P('Teléfono de María Gómez', "María Gómez's phone")],
+  historial: [P('Qué reparación le hicimos a la bici de Juan Pérez', 'What repair did we do on Juan Pérez bike'), P('Cuándo fue el último servicio de Carlos Pérez', 'When was the last service of Carlos Pérez'), P('Quién debe plata', 'Who owes money')],
+  accesos: [P('Ingreso Juan Pérez con Marta', 'Check in Juan Pérez with Marta'), P('Egreso María Gómez', 'Check out María Gómez'), P('Cuántos ingresaron hoy', 'How many came in today'), P('Quién queda adentro', "Who's still inside"), P('A qué hora ingresó Juan Pérez y con quién', 'What time did Juan Pérez come in and with whom'), P('Cuándo fue la última vez que ingresó Carlos Pérez', 'When did Carlos Pérez last come in')],
+  agenda: [P('Qué trabajos tengo hoy', 'What jobs do I have today'), P('Qué turnos tengo el viernes', 'What appointments on Friday'), P('Agendá a Juan Pérez el viernes a las 15 service', 'Book Juan Pérez on Friday at 3pm service'), P('Pasá el turno de Ana Torres al lunes a las 10', 'Move the appointment of Ana Torres to Monday at 10'), P('Cancelá el turno de María Gómez', 'Cancel the appointment of María Gómez'), P('Confirmá el turno de Ana Torres', 'Confirm the appointment of Ana Torres')],
+  stock: [P('Cuánto stock hay de cámara 26', 'How many cámara 26 in stock'), P('Agregá 5 cámaras 26 al stock', 'Add 5 cámara 26 to stock'), P('Sacá 2 cadenas del stock', 'Remove 2 cadena from stock'), P('Precio de pastillas de freno', 'Price of pastillas de freno'), P('Cambiá el precio de cámara 26 a 4000', 'Change the price of cámara 26 to 4000'), P('Stock bajo', 'Low stock')],
+  reportes: [P('Resumen del día', 'Summary of the day'), P('Resumen de la semana', 'Summary of the week'), P('Cuánto facturamos este mes', 'How much did we bill this month')],
+  recordatorios: [P('Avisame mañana a las 9 de llamar a Pérez', 'Remind me tomorrow at 9 to call Pérez'), P('Mis recordatorios', 'My reminders')],
+  plantillas: [P('Presupuesto para Juan Pérez: 2 cámara 26, cadena', 'Quote for Juan Pérez: 2 cámara 26, cadena'), P('Guardá respuesta horarios: Abrimos de 9 a 18', 'Save reply hours: We open 9 to 6'), P('Usá recordatorio de turno para Juan Pérez', 'Use recordatorio de turno for Juan Pérez')],
+  alertas: [P('Alertas', 'Alerts')],
+  whatsapp: [P('Mandale el turno a Juan Pérez por WhatsApp', 'Send the appointment to Juan Pérez via WhatsApp')]
+};
+function ejemplosActivos() { const o = []; for (const m of Object.keys(EJEMPLOS)) if (moduloActivo(m) && Auth.puede(m)) EJEMPLOS[m].forEach(e => o.push(e[Cfg.idioma] || e.es)); return o; }
+function ayuda() {
+  const ej = []; for (const m of Object.keys(EJEMPLOS)) if (moduloActivo(m) && Auth.puede(m)) ej.push(...EJEMPLOS[m].slice(0, 2).map(e => '• ' + (e[Cfg.idioma] || e.es)));
+  return R(L('Probá decirme, por ejemplo:\n', 'Try saying, for example:\n') + ej.join('\n') + '\n\n' + L('También podés sacar una foto 📷 de una factura, o hablarme con el 🎤.', 'You can also take a photo 📷 of an invoice, or talk to me with the 🎤.'));
+}
+
+/* ---------- ALERTAS ---------- */
+function alertas() {
+  const a = []; const hoy = todayIso(), man = addDays(1);
+  if (moduloActivo('stock')) Store.all('stock').filter(x => (+x.cantidad || 0) <= (+x.minimo || 0) && x.minimo != null).forEach(x => a.push({ n: (+x.cantidad || 0) === 0 ? 2 : 1, t: L(`Stock bajo: ${x.nombre} (quedan ${x.cantidad}, mínimo ${x.minimo})`, `Low stock: ${x.nombre} (${x.cantidad} left, minimum ${x.minimo})`), cmd: L('stock bajo', 'low stock') }));
+  if (moduloActivo('agenda')) {
+    Store.all('agenda').filter(x => (x.fecha === hoy || x.fecha === man) && x.estado === 'pendiente').forEach(x => a.push({ n: 1, t: L(`${ucf(lab('agendaItem'))} sin confirmar: ${x.personaNombre} ${rel(x.fecha)} ${x.hora || ''}`, `Unconfirmed ${lab('agendaItem')}: ${x.personaNombre} ${rel(x.fecha)} ${x.hora || ''}`), cmd: L('turnos sin confirmar', 'unconfirmed appointments') }));
+    Store.all('agenda').filter(x => x.fecha < hoy && !['listo', 'entregado', 'cancelado', 'realizado'].includes(x.estado)).forEach(x => a.push({ n: 1, t: L(`${ucf(lab('agendaItem'))} vencido sin cerrar: ${x.personaNombre} (${fmtFechaCorta(x.fecha)})`, `Overdue ${lab('agendaItem')}: ${x.personaNombre} (${fmtFechaCorta(x.fecha)})`) }));
+  }
+  const imp = Store.all('servicios').filter(s => s.importe && s.pagado === false);
+  if (imp.length && (moduloActivo('historial') || moduloActivo('reportes'))) a.push({ n: 1, t: L(`Pagos pendientes: ${imp.length} por ${money(imp.reduce((t, s) => t + (+s.importe || 0), 0))}`, `Pending payments: ${imp.length} totaling ${money(imp.reduce((t, s) => t + (+s.importe || 0), 0))}`), cmd: L('quién debe plata', 'who owes money') });
+  const vencidos = Store.all('recordatorios').filter(r => !r.hecho && r.cuando <= hoy + 'T' + nowHM());
+  vencidos.forEach(r => a.push({ n: 2, t: L('Recordatorio vencido: ', 'Reminder due: ') + r.texto }));
+  if (moduloActivo('accesos')) { const q = quienQueda().filter(x => x.fecha < hoy); if (q.length) a.push({ n: 1, t: L(`${q.length} ${plural(q.length, 'persona', 'personas')} con ingreso de días anteriores y sin egreso`, `${q.length} with an entry from earlier days and no exit`), cmd: L('quién queda adentro', "who's inside") }); }
+  return a.sort((x, y) => y.n - x.n);
+}
+
+/* ---------- ACCESOS ---------- */
+const claveAcc = a => a.personaId || norm(a.personaNombre);
+const ordenAcc = (x, y) => (y.fecha + (y.hora || '')).localeCompare(x.fecha + (x.hora || ''));
+function quienQueda() {
+  const last = {};
+  Store.all('accesos').slice().sort((x, y) => (x.fecha + (x.hora || '')).localeCompare(y.fecha + (y.hora || ''))).forEach(a => { last[claveAcc(a)] = a; });
+  return Object.values(last).filter(a => a.tipo === 'ingreso').sort((x, y) => (x.fecha + (x.hora || '')).localeCompare(y.fecha + (y.hora || '')));
+}
+const accDe = p => Store.all('accesos').filter(a => a.personaId === p.id || norm(a.personaNombre) === norm(p.nombre)).sort(ordenAcc);
+const lineaAcc = a => `${a.hora || ''} · ${a.personaNombre}${a.conQuien ? L(' (con ', ' (with ') + a.conQuien + ')' : ''}`;
+
+function hAccesos(q, raw) {
+  const f = parseFecha(q); const fecha = f ? f.iso : todayIso(); const q1 = f ? f.rest : q;
+  // consultas
+  if (/\b(quien(es)?|who)\b.*\b(queda|quedan|esta|estan|hay|adentro|dentro|inside|still|remain)/.test(q) || /\b(cuantos|cuantas|how many)\b.*\b(adentro|dentro|inside|still in|hay gente|personas hay|people)\b/.test(q) && !/ingres|egres|\bentr|\bsali/.test(q)) {
+    const dentro = quienQueda();
+    if (!dentro.length) return R(L('No queda nadie adentro.', 'Nobody is inside.'));
+    const hoyL = dentro.filter(a => a.fecha === todayIso()), viejos = dentro.filter(a => a.fecha < todayIso());
+    let t = L(`Quedan ${dentro.length} ${plural(dentro.length, 'persona', 'personas')} adentro:\n`, `${dentro.length} ${plural(dentro.length, 'person is', 'people are')} inside:\n`) + hoyL.concat(viejos).map(a => '• ' + lineaAcc(a) + (a.fecha < todayIso() ? L(` — desde ${rel(a.fecha)}, sin egreso registrado`, ` — since ${rel(a.fecha)}, no exit recorded`) : '')).join('\n');
+    return R(t, { speak: L(`Quedan ${dentro.length} adentro: `, `${dentro.length} inside: `) + dentro.slice(0, 6).map(a => a.personaNombre).join(', ') });
+  }
+  if (/\b(cuantos|cuantas|how many)\b.*\b(ingres|entr|llegar|vinier|came in|entered|checked in|arrived)/.test(q) || /\b(cuantos|cuantas|how many)\b.*\b(egres|sali|se fuer|left|checked out|exited)/.test(q)) {
+    const tipo = /egres|sali|se fuer|left|checked out|exited/.test(q) ? 'egreso' : 'ingreso';
+    const rg = rangoFechas(f) || [fecha, fecha];
+    const mv = Store.all('accesos').filter(a => a.tipo === tipo && a.fecha >= rg[0] && a.fecha <= rg[1]);
+    const dist = new Set(mv.map(claveAcc)).size;
+    const cuando = rg[0] === rg[1] ? rel(rg[0]) : L('en ese período', 'in that period');
+    const verbo = tipo === 'ingreso' ? L('ingresaron', 'came in') : L('egresaron', 'left');
+    let t = L(`${cap(cuando)} ${verbo} ${mv.length} ${plural(mv.length, 'persona', 'personas')}`, `${cap(cuando)}, ${mv.length} ${plural(mv.length, 'person', 'people')} ${verbo}`) + (dist !== mv.length ? L(` (${dist} distintas).`, ` (${dist} different).`) : '.');
+    if (mv.length && mv.length <= 12) t += '\n' + mv.sort((x, y) => (x.hora || '').localeCompare(y.hora || '')).map(a => '• ' + lineaAcc(a)).join('\n');
+    return R(t, { speak: t.split('\n')[0] });
+  }
+  if (/\b(quien(es)?|who)\b.*\b(ingres|entr|llego|llegar|vino|vinier|came|entered)/.test(q)) {
+    const mv = Store.all('accesos').filter(a => a.tipo === 'ingreso' && a.fecha === fecha).sort((x, y) => (x.hora || '').localeCompare(y.hora || ''));
+    if (!mv.length) return R(L(`No hay ingresos registrados ${rel(fecha)}.`, `No entries recorded ${rel(fecha)}.`));
+    return R(L(`Ingresos ${rel(fecha)}:\n`, `Entries ${rel(fecha)}:\n`) + mv.map(a => '• ' + lineaAcc(a)).join('\n'));
+  }
+  const esConsulta = /\?|\b(cuando|a que hora|ultima vez|last time|what time|when)\b/.test(raw.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')) || /\b(cuando|a que hora|ultima vez|last time|what time|when)\b/.test(q);
+  if (esConsulta && /\b(ingres|entr|llego|llegar|vino|vinier|visit|asist|came|entered|arrive|egres|sali|se fue|left)/.test(q)) {
+    const res = conPersona(q1, (p) => {
+      const lista = accDe(p);
+      if (!lista.length) return R(L(`No tengo ingresos registrados de ${p.nombre}.`, `I have no entries recorded for ${p.nombre}.`));
+      const hora = /\b(a que hora|what time)\b/.test(q);
+      const salida = /\b(egres|sali|se fue|left)/.test(q) && !/ingres/.test(q);
+      const tipo = salida ? 'egreso' : 'ingreso';
+      const base = quitarPersona(q, p); ctx.last = { kinds: ['persona'], fn: (a) => hAccesos(base + ' ' + norm(a.persona || ''), '?') };
+      if (hora || f) {
+        const del = lista.filter(a => a.tipo === tipo && a.fecha === fecha);
+        if (del.length) return R(del.map(a => L(`${p.nombre} ${salida ? 'egresó' : 'ingresó'} ${rel(a.fecha)} a las ${a.hora}${a.conQuien ? ', con ' + a.conQuien : (salida ? '' : ', solo/a')}.`, `${p.nombre} ${salida ? 'left' : 'came in'} ${rel(a.fecha)} at ${a.hora}${a.conQuien ? ', with ' + a.conQuien : (salida ? '' : ', alone')}.`)).join('\n'));
+        const u = lista.find(a => a.tipo === tipo);
+        return R(L(`No tengo ${salida ? 'egreso' : 'ingreso'} de ${p.nombre} ${rel(fecha)}.`, `No ${salida ? 'exit' : 'entry'} for ${p.nombre} ${rel(fecha)}.`) + (u ? L(` El último fue ${rel(u.fecha)} a las ${u.hora}${u.conQuien ? ', con ' + u.conQuien : ''}.`, ` The last one was ${rel(u.fecha)} at ${u.hora}${u.conQuien ? ', with ' + u.conQuien : ''}.`) : ''));
+      }
+      const u = lista.find(a => a.tipo === tipo) || lista[0];
+      return R(L(`${p.nombre} ${u.tipo === 'egreso' ? 'egresó' : 'ingresó'} por última vez ${rel(u.fecha)} a las ${u.hora}${u.conQuien ? ', con ' + u.conQuien : ''}.`, `${p.nombre} last ${u.tipo === 'egreso' ? 'left' : 'came in'} ${rel(u.fecha)} at ${u.hora}${u.conQuien ? ', with ' + u.conQuien : ''}.`));
+    });
+    if (res) return res;
+    return R(L('¿De quién? Decime el nombre.', 'Whose? Tell me the name.'));
+  }
+  // registrar ingreso / egreso
+  const mReg = q.match(/^(?:registra\w*\s+|anota\w*\s+|marca\w*\s+)?(ingreso|egreso|entrada|salida|check ?in|check ?out)\s+(?:de\s+|del\s+|a\s+|for\s+)?(.+)$/) || q.match(/^(.+?)\s+(ingreso|ingreso|entro|llego|egreso|salio|se fue|checked in|checked out|arrived|left)\b(.*)$/);
+  if (mReg) {
+    let verbo, resto;
+    if (/^(ingreso|egreso|entrada|salida|check)/.test(q) || /^(registra|anota|marca)/.test(q)) { verbo = mReg[1]; resto = mReg[2]; } else { verbo = mReg[2]; resto = mReg[1] + ' ' + (mReg[3] || ''); }
+    const tipo = /egres|salid|salio|se fue|check ?out|left/.test(verbo) ? 'egreso' : 'ingreso';
+    return registrarAcceso(tipo, resto, raw);
+  }
+  return null;
+}
+function registrarAcceso(tipo, resto, raw) {
+  let conQuien = '';
+  const mc = resto.match(/\b(?:con|acompanad[oa]\s+(?:de|por)|with|accompanied by)\s+(.+)$/);
+  let sin = resto;
+  if (mc) { conQuien = mc[1]; sin = resto.slice(0, mc.index); }
+  const f = parseFecha(sin); const fecha = f ? f.iso : todayIso(); if (f) sin = f.rest;
+  const h = parseHora(sin); const hora = h ? h.hm : nowHM(); if (h) sin = h.rest;
+  const quienOrig = (() => { // recupera mayúsculas del texto original para el nombre de "con quién"
+    if (!conQuien) return ''; const m = raw.match(/\b(?:con|acompañad[oa]\s+(?:de|por)|with|accompanied by)\s+(.+)$/i); return m ? m[1].replace(/\s+(hoy|ayer|mañana|a las.*)$/i, '').trim() : conQuien;
+  })();
+  const cp = personasEn(norm(quienOrig)); const con = cp.length === 1 ? cp[0].nombre : quienOrig;
+  const hacer = (p, nombreLibre) => {
+    const nombre = p ? p.nombre : nombreLibre;
+    const prev = Store.all('accesos').filter(a => claveAcc(a) === (p ? p.id : norm(nombre))).sort(ordenAcc)[0];
+    let aviso = '';
+    if (tipo === 'ingreso' && prev && prev.tipo === 'ingreso') aviso = L('\n⚠️ Ya figura adentro desde ' + rel(prev.fecha) + ' ' + prev.hora + '.', '\n⚠️ Already inside since ' + rel(prev.fecha) + ' ' + prev.hora + '.');
+    if (tipo === 'egreso' && (!prev || prev.tipo === 'egreso')) aviso = L('\n⚠️ No tiene un ingreso registrado.', '\n⚠️ No entry recorded for this person.');
+    const texto = L(`Registro ${tipo.toUpperCase()} de ${nombre} ${rel(fecha)} a las ${hora}${con ? ' (con ' + con + ')' : ''}${p ? '' : ' como visita'}.`, `Record ${tipo === 'ingreso' ? 'CHECK-IN' : 'CHECK-OUT'} of ${nombre} ${rel(fecha)} at ${hora}${con ? ' (with ' + con + ')' : ''}${p ? '' : ' as a visitor'}.`) + aviso;
+    return proponer(texto, [{ op: 'add', col: 'accesos', doc: { fecha, hora, tipo, personaId: p ? p.id : null, personaNombre: nombre, categoria: p ? lab('persona') : L('visita', 'visitor'), conQuien: con, por: nombreUsuario() } }], { desc: `${tipo} ${nombre} ${fecha} ${hora}` });
+  };
+  const nuevoN = nombreNuevoExplicito(String(raw).replace(/\s+(?:con|acompañad[oa]\s+(?:de|por)|with)\s+.+$/i, ''));
+  if (nuevoN) return hacer(null, nuevoN);
+  const r = conPersona(sin, p => hacer(p));
+  if (r) return r;
+  let libre = String(raw || '').replace(/^\s*(?:registra\w*|anota\w*|marca\w*)\s+/i, '').replace(/^\s*(?:ingres\w*|egres\w*|entrada|salida|check[ -]?(?:in|out))\s+(?:de\s+|del\s+|a\s+|for\s+)?/i, '').replace(/\s+(?:con|acompañad[oa]\s+(?:de|por)|with|accompanied by)\s+.+$/i, '').replace(/\s+(?:ingres\w*|egres\w*|entr[oó]|sali[oó]|lleg\w*|se fue|checked (?:in|out)|arrived|left)\b.*$/i, '').replace(/\b(hoy|ayer|mañana|today|yesterday|tomorrow)\b/ig, ' ').replace(/\b(?:a las?|at)\s+\d{1,2}(?:[:.h]\d{2})?\s*(?:am|pm|hs?)?/ig, ' ').replace(/\s+/g, ' ').trim();
+  libre = cap(libre);
+  if (!libre) return R(L('¿Quién? Decime el nombre.', 'Who? Tell me the name.'));
+  return hacer(null, libre);
+}
+
+/* ---------- HISTORIAL (servicios, reparaciones, pagos) ---------- */
+const lineaSvc = s => `${fmtFechaCorta(s.fecha)} · ${s.detalle}${s.objeto && !norm(s.detalle).includes(norm(s.objeto)) ? ' (' + s.objeto + ')' : ''}${s.importe ? ' · ' + money(s.importe) : ''}${s.pagado === false ? L(' · PENDIENTE DE PAGO', ' · UNPAID') : ''}`;
+const svcDe = p => Store.all('servicios').filter(s => s.personaId === p.id || norm(s.personaNombre) === norm(p.nombre)).sort((a, b) => b.fecha.localeCompare(a.fecha));
+function hHistorial(q, raw) {
+  if (/\b(quien(es)?|who)\b.*\b(debe|deben|deuda|adeuda|owes?)\b|\b(pagos? pendientes?|deudores|unpaid|pending payments?|saldo pendiente)\b/.test(q)) {
+    const imp = Store.all('servicios').filter(s => s.importe && s.pagado === false);
+    if (!imp.length) return R(L('No hay pagos pendientes. 👌', 'No pending payments. 👌'));
+    const total = imp.reduce((t, s) => t + (+s.importe || 0), 0);
+    return R(L(`Pagos pendientes (${money(total)} en total):\n`, `Pending payments (${money(total)} total):\n`) + imp.map(s => '• ' + s.personaNombre + ' — ' + lineaSvc(s).replace(/ · PENDIENTE DE PAGO| · UNPAID/, '')).join('\n'), { reporte: true });
+  }
+  const palabra = /\b(reparacion|reparaciones|arreglo|arreglos|servicio|servicios|service|services|trabajo|trabajos|corte|cortes|venta|ventas|compra|compras|pago|pagos|cuota|cuotas|repair|repairs|job|jobs|haircut|sale|sales|payment|payments)\b/;
+  if (palabra.test(q) && /\b(ultim[oa]s?|last|hicimos|hizo|hiciste|hice|hizo|did we|done|historial|history|cuantos|cuantas|how many|que|cuales|what|which|cuando|when|le (?:vendimos|cobramos)|debe|owes?)\b/.test(q)) {
+    const r = conPersona(q, (p) => {
+      const l = svcDe(p);
+      if (!l.length) return R(L(`No tengo ${lab('servicios')} registrados de ${p.nombre}.`, `I have no ${lab('servicios')} recorded for ${p.nombre}.`));
+      const cant = /\b(cuantos|cuantas|how many)\b/.test(q);
+      const ult = /\b(ultim[oa]|last)\b/.test(q) || /\bcuando\b|\bwhen\b/.test(q);
+      const obj = p.nota ? ` (${p.nota})` : '';
+      const base = quitarPersona(q, p); ctx.last = { kinds: ['persona'], fn: (a) => hHistorial(base + ' ' + norm(a.persona || '')) };
+      if (cant) return R(L(`${p.nombre} tiene ${l.length} ${plural(l.length, 'registro', 'registros')} de ${lab('servicios')}. Total: ${money(l.reduce((t, s) => t + (+s.importe || 0), 0))}.`, `${p.nombre} has ${l.length} ${lab('servicios')} on record. Total: ${money(l.reduce((t, s) => t + (+s.importe || 0), 0))}.`));
+      if (ult) { const s = l[0]; return R(L(`Lo último para ${p.nombre}${obj}: ${lineaSvc(s)}.`, `Latest for ${p.nombre}${obj}: ${lineaSvc(s)}.`), { speak: L(`El último fue el ${fmtFechaCorta(s.fecha)}: ${s.detalle}.`, `The last one was on ${fmtFechaCorta(s.fecha)}: ${s.detalle}.`) }); }
+      return R(L(`${ucf(lab('servicios'))} de ${p.nombre}${obj}:\n`, `${ucf(lab('servicios'))} for ${p.nombre}${obj}:\n`) + l.slice(0, 8).map(s => '• ' + lineaSvc(s)).join('\n') + (l.length > 8 ? L(`\n… y ${l.length - 8} más.`, `\n… and ${l.length - 8} more.`) : ''), { speak: L(`${p.nombre} tiene ${l.length} registros. El último: ${l[0].detalle}, el ${fmtFechaCorta(l[0].fecha)}.`, `${p.nombre} has ${l.length} records. The latest: ${l[0].detalle} on ${fmtFechaCorta(l[0].fecha)}.`) });
+    });
+    if (r) return r;
+    const mn = String(raw || '').match(/\b(?:de|del|a|of|for|on)\s+([A-ZÁÉÍÓÚÑ][\wáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)*)\s*[?.!]*$/);
+    if (mn && !KWMOD.agenda.test(q)) return noEncontre(mn[1]);
+    if (/\b(hicimos|hizo|did we|ultim[oa]|last)\b/.test(q) && !KWMOD.agenda.test(q)) return R(L('¿De quién? Decime el nombre del cliente.', 'Whose? Tell me the name.'));
+    return null;
+  }
+  return null;
+}
+
+/* ---------- AGENDA ---------- */
+const ESTADOS = ['pendiente', 'confirmado', 'en curso', 'listo', 'entregado', 'realizado', 'cancelado'];
+const lineaAg = a => `${a.hora || '--:--'} · ${a.personaNombre}${a.titulo ? ' — ' + a.titulo : ''} (${L(a.estado || 'pendiente', { pendiente: 'pending', confirmado: 'confirmed', 'en curso': 'in progress', listo: 'ready', entregado: 'delivered', realizado: 'done', cancelado: 'cancelled' }[a.estado || 'pendiente'])})`;
+const agendaDe = (d1, d2) => Store.all('agenda').filter(a => a.fecha >= d1 && a.fecha <= d2 && a.estado !== 'cancelado').sort((x, y) => (x.fecha + (x.hora || '')).localeCompare(y.fecha + (y.hora || '')));
+function listarAgenda(f) {
+  let rg = rangoFechas(f) || [todayIso(), todayIso()];
+  if (f && f.rango === 'semana' && f.iso === todayIso()) rg = [todayIso(), addDays(6)];
+  const lista = agendaDe(rg[0], rg[1]);
+  const et = lab('agenda');
+  if (rg[0] === rg[1]) {
+    if (!lista.length) return R(L(`No tenés ${et} ${rel(rg[0])}.`, `You have no ${et} ${rel(rg[0])}.`), { speak: L(`No tenés ${et} ${rel(rg[0])}.`, `No ${et} ${rel(rg[0])}.`) });
+    const t = L(`${cap(rel(rg[0]))} tenés ${lista.length} ${plural(lista.length, lab('agendaItem'), et)}:\n`, `${cap(rel(rg[0]))} you have ${lista.length} ${plural(lista.length, lab('agendaItem'), et)}:\n`) + lista.map(a => '• ' + lineaAg(a)).join('\n');
+    return R(t, { speak: L(`${cap(rel(rg[0]))} tenés ${lista.length}. `, `${cap(rel(rg[0]))}: ${lista.length}. `) + lista.slice(0, 5).map(a => `${a.hora ? L('a las ', 'at ') + a.hora + ', ' : ''}${a.personaNombre}${a.titulo ? ', ' + a.titulo : ''}`).join('. '), reporte: true });
+  }
+  if (!lista.length) return R(L(`No hay ${et} entre el ${fmtFechaCorta(rg[0])} y el ${fmtFechaCorta(rg[1])}.`, `No ${et} between ${fmtFechaCorta(rg[0])} and ${fmtFechaCorta(rg[1])}.`));
+  let t = L(`${cap(et)} del ${fmtFechaCorta(rg[0])} al ${fmtFechaCorta(rg[1])} (${lista.length}):\n`, `${cap(et)} from ${fmtFechaCorta(rg[0])} to ${fmtFechaCorta(rg[1])} (${lista.length}):\n`);
+  let dia = ''; lista.forEach(a => { if (a.fecha !== dia) { dia = a.fecha; t += `\n${fmtFecha(dia, Cfg.idioma)}\n`; } t += '• ' + lineaAg(a) + '\n'; });
+  return R(t.trim(), { speak: L(`Tenés ${lista.length} ${et} en ese período.`, `You have ${lista.length} ${et} in that period.`), reporte: true });
+}
+function conflicto(fecha, hora, exceptoId) { return hora ? Store.all('agenda').filter(a => a.fecha === fecha && a.hora === hora && a.estado !== 'cancelado' && a.id !== exceptoId) : []; }
+function proximosDe(p) { return Store.all('agenda').filter(a => (a.personaId === p.id || norm(a.personaNombre) === norm(p.nombre)) && a.fecha >= todayIso() && !['cancelado', 'entregado', 'realizado'].includes(a.estado)).sort((x, y) => (x.fecha + (x.hora || '')).localeCompare(y.fecha + (y.hora || ''))); }
+
+function hAgenda(q, raw) {
+  const KW = /\b(turnos?|trabajos?|reservas?|citas?|agenda|entregas?|appointments?|jobs?|bookings?|schedule|deliver(?:y|ies))\b/;
+  const f = parseFecha(q);
+  // sin confirmar
+  if (/\b(sin confirmar|no confirmad[oa]s?|pendientes? de confirmar|unconfirmed)\b/.test(q)) {
+    const l = Store.all('agenda').filter(a => a.estado === 'pendiente' && a.fecha >= todayIso()).sort((x, y) => (x.fecha + (x.hora || '')).localeCompare(y.fecha + (y.hora || '')));
+    if (!l.length) return R(L('No hay nada sin confirmar. 👌', 'Nothing unconfirmed. 👌'));
+    return R(L('Sin confirmar:\n', 'Unconfirmed:\n') + l.map(a => `• ${rel(a.fecha)} ${lineaAg(a)}`).join('\n'));
+  }
+  // libre?
+  if (/\b(esta libre|hay lugar|hay hueco|disponible|disponibilidad|libre|free|available|open slot)\b/.test(q) && (f || parseHora(q))) {
+    const fecha = f ? f.iso : todayIso(); const h = parseHora(f ? f.rest : q);
+    if (h) { const c = conflicto(fecha, h.hm); return R(c.length ? L(`No: ${rel(fecha)} a las ${h.hm} ya está ${c[0].personaNombre} (${c[0].titulo || ''}).`, `No: ${rel(fecha)} at ${h.hm} ${c[0].personaNombre} is already booked.`) : L(`Sí, ${rel(fecha)} a las ${h.hm} está libre.`, `Yes, ${rel(fecha)} at ${h.hm} is free.`)); }
+    const l = agendaDe(fecha, fecha); return R(l.length ? L(`${cap(rel(fecha))} ya hay ocupado: ${l.map(a => a.hora).filter(Boolean).join(', ')}.`, `${cap(rel(fecha))} taken: ${l.map(a => a.hora).filter(Boolean).join(', ')}.`) : L(`${cap(rel(fecha))} está todo libre.`, `${cap(rel(fecha))} is completely free.`));
+  }
+  // cambiar estado
+  const mEst = q.match(/\b(confirma\w*|marca\w*|pone\w*|pasa\w*|dej\w*|mark|set|confirm)\b.*?\b(confirmad[oa]|listo|lista|entregad[oa]|terminad[oa]|realizad[oa]|en curso|ready|done|delivered|confirmed|finished)\b|^(confirma\w*|confirm)\b/);
+  if (mEst && KW.test(q) && !/\b(pasa\w*|mueve|mover|move|reprogram\w*)\b.*\b(al|a el|para|to)\b.*(lunes|martes|miercoles|jueves|viernes|sabado|domingo|manana|monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|\d)/.test(q)) {
+    const w = mEst[2] || 'confirmado';
+    const est = /confirm/.test(mEst[0]) && !mEst[2] ? 'confirmado' : /confirm/.test(w) ? 'confirmado' : /listo|lista|ready|terminad|finished|done/.test(w) ? (lab('agendaItem') === 'turno' || lab('agendaItem') === 'reserva' ? 'realizado' : 'listo') : /entreg|deliver/.test(w) ? 'entregado' : /curso/.test(w) ? 'en curso' : 'realizado';
+    const r = conPersona(q, p => {
+      const prox = proximosDe(p);
+      if (!prox.length) return R(L(`${p.nombre} no tiene ${lab('agenda')} pendientes.`, `${p.nombre} has no open ${lab('agenda')}.`));
+      const hacer = (a) => proponer(L(`Marco el ${lab('agendaItem')} de ${a.personaNombre} (${rel(a.fecha)} ${a.hora || ''}) como “${est}”.`, `Mark ${a.personaNombre}'s ${lab('agendaItem')} (${rel(a.fecha)} ${a.hora || ''}) as “${est}”.`), [{ op: 'upd', col: 'agenda', id: a.id, patch: { estado: est } }], { desc: `${a.personaNombre}: ${est}` });
+      return prox.length === 1 ? hacer(prox[0]) : elegir(prox, a => `${rel(a.fecha)} ${a.hora || ''} ${a.titulo || ''}`, hacer);
+    });
+    if (r) return r;
+  }
+  // cancelar
+  if (/\b(cancela\w*|anula\w*|borra\w*|elimina\w*|saca\w*|cancel|delete|remove)\b/.test(q) && KW.test(q)) {
+    if (!Auth.esDueno()) return R(L('Solo el dueño puede cancelar. Pedíselo a él.', 'Only the owner can cancel. Ask them.'));
+    const r = conPersona(q, p => {
+      const prox = proximosDe(p);
+      if (!prox.length) return R(L(`${p.nombre} no tiene ${lab('agenda')} próximos.`, `${p.nombre} has no upcoming ${lab('agenda')}.`));
+      const hacer = (a) => proponer(L(`Cancelo el ${lab('agendaItem')} de ${a.personaNombre} (${rel(a.fecha)} ${a.hora || ''}${a.titulo ? ', ' + a.titulo : ''}).`, `Cancel ${a.personaNombre}'s ${lab('agendaItem')} (${rel(a.fecha)} ${a.hora || ''}).`), [{ op: 'upd', col: 'agenda', id: a.id, patch: { estado: 'cancelado' } }], { desc: L('Cancelado: ', 'Cancelled: ') + a.personaNombre });
+      return prox.length === 1 ? hacer(prox[0]) : elegir(prox, a => `${rel(a.fecha)} ${a.hora || ''} ${a.titulo || ''}`, hacer);
+    });
+    if (r) return r;
+  }
+  // mover
+  if (/\b(pasa\w*|mueve|mover|move|reprograma\w*|reschedule|cambia\w*|change|postergá|posterga\w*|adelanta\w*)\b/.test(q) && (KW.test(q) || true) && (f || parseHora(q)) && personasEn(q).length && !/precio|price/.test(q)) {
+    const r = conPersona(q, p => {
+      const prox = proximosDe(p);
+      if (!prox.length) return R(L(`${p.nombre} no tiene ${lab('agenda')} próximos para mover.`, `${p.nombre} has no upcoming ${lab('agenda')} to move.`));
+      let rest = quitarPersona(f ? f.rest : q, p); const h = parseHora(rest);
+      const hacer = (a) => {
+        const nf = f ? f.iso : a.fecha, nh = h ? h.hm : a.hora;
+        const c = conflicto(nf, nh, a.id);
+        return proponer(L(`Paso el ${lab('agendaItem')} de ${a.personaNombre} del ${rel(a.fecha)} ${a.hora || ''} al ${rel(nf)} ${nh || ''}.`, `Move ${a.personaNombre}'s ${lab('agendaItem')} from ${rel(a.fecha)} ${a.hora || ''} to ${rel(nf)} ${nh || ''}.`) + (c.length ? L(`\n⚠️ A esa hora ya está ${c[0].personaNombre}.`, `\n⚠️ ${c[0].personaNombre} is already at that time.`) : ''), [{ op: 'upd', col: 'agenda', id: a.id, patch: { fecha: nf, hora: nh } }], { desc: L('Movido: ', 'Moved: ') + a.personaNombre });
+      };
+      return prox.length === 1 ? hacer(prox[0]) : elegir(prox, a => `${rel(a.fecha)} ${a.hora || ''} ${a.titulo || ''}`, hacer);
+    });
+    if (r) return r;
+  }
+  // agendar
+  const mAdd = q.match(/^(?:por favor\s+)?(agenda\w*|anota\w*|reserva\w*|pone\w*|saca\w*|crea\w*|programa\w*|book|schedule|add|create|make)\b\s*(.*)$/);
+  if (mAdd && !/\b(stock|inventario|inventory|cliente|socio|client|member|customer|producto|recordatorio|reminder)\b/.test(q) && (f || parseHora(q) || KW.test(q))) {
+    let rest = mAdd[2].replace(/\b(un|una|el|la|a|an|the)?\s*(turno|trabajo|reserva|cita|entrega|appointment|job|booking|delivery)s?\b/, ' ').replace(/\s+/g, ' ').trim();
+    const f2 = parseFecha(rest); const fecha = f2 ? f2.iso : todayIso(); if (f2) rest = f2.rest;
+    const h = parseHora(rest); const hora = h ? h.hm : ''; if (h) rest = h.rest;
+    const hacer = (p, libre, detalle) => {
+      const nombre = p ? p.nombre : libre; const c = conflicto(fecha, hora);
+      return proponer(L(`Agendo ${lab('agendaItem')}: ${nombre}, ${rel(fecha)}${hora ? ' a las ' + hora : ''}${detalle ? ' — ' + detalle : ''}.`, `Book ${lab('agendaItem')}: ${nombre}, ${rel(fecha)}${hora ? ' at ' + hora : ''}${detalle ? ' — ' + detalle : ''}.`) + (c.length ? L(`\n⚠️ A esa hora ya está ${c[0].personaNombre}.`, `\n⚠️ ${c[0].personaNombre} is already booked then.`) : '') + (!hora ? L('\n(Sin hora definida.)', '\n(No time set.)') : ''),
+        [{ op: 'add', col: 'agenda', doc: { fecha, hora, personaId: p ? p.id : null, personaNombre: nombre, titulo: detalle, estado: 'pendiente', por: nombreUsuario() } }], { desc: `${L('Agendado', 'Booked')}: ${nombre} ${fecha} ${hora}` });
+    };
+    const nuevoN = nombreNuevoExplicito(raw);
+    if (nuevoN) return hacer(null, nuevoN, detalleLimpio(norm(rest).replace(norm(nuevoN), ' '), raw));
+    const c = personasEn(rest);
+    if (c.length === 1) return hacer(c[0], null, detalleLimpio(rest, raw, c[0]));
+    if (c.length > 1) return elegir(c, p => p.nombre + (p.nota ? ' · ' + p.nota : ''), p => hacer(p, null, detalleLimpio(rest, raw, p)), c[0]._term);
+    const m2 = raw.match(/(?:para|a|for|to)\s+([A-ZÁÉÍÓÚÑ][\wáéíóúñ]+(?:\s+[A-ZÁÉÍÓÚÑ][\wáéíóúñ]+)?)/);
+    if (m2) return hacer(null, m2[1], detalleLimpio(norm(rest).replace(norm(m2[1]), ' '), raw));
+    return R(L('¿Para quién lo agendo? Decime el nombre (por ejemplo: “agendá a Juan Pérez el viernes a las 15”).', 'Who is it for? Tell me the name.'));
+  }
+  // consultar
+  if (KW.test(q) && /\b(que|cuales|cuantos|cuantas|mostra\w*|ver|lista\w*|tengo|tenemos|hay|what|which|how many|show|list|have|any|agenda)\b/.test(q)) {
+    const fq = f || { iso: todayIso() };
+    ctx.last = { kinds: ['fecha'], fn: (a) => listarAgenda(a.fecha ? { iso: a.fecha.iso, rango: a.fecha.rango } : fq) };
+    return listarAgenda(fq);
+  }
+  return null;
+}
+
+/* ---------- STOCK ---------- */
+const lineaStock = s => `${s.nombre}: ${s.cantidad} ${L('en stock', 'in stock')}${s.precio ? ' · ' + money(s.precio) : ''}${s.minimo != null && +s.cantidad <= +s.minimo ? ' ⚠️' : ''}`;
+function hStock(q, raw) {
+  const q2 = numerosAPalabra(q);
+  if (/\b(stock bajo|poco stock|faltantes?|que falta|reponer|low stock|running low|out of stock|sin stock|a reponer)\b/.test(q)) {
+    const l = Store.all('stock').filter(s => s.minimo != null && +s.cantidad <= +s.minimo);
+    if (!l.length) return R(L('No hay productos con stock bajo. 👌', 'No low-stock items. 👌'));
+    return R(L(`Stock bajo (${l.length}):\n`, `Low stock (${l.length}):\n`) + l.map(s => `• ${s.nombre}: ${s.cantidad} (${L('mínimo', 'minimum')} ${s.minimo})`).join('\n'), { speak: L(`Hay ${l.length} productos con stock bajo: `, `${l.length} low-stock items: `) + l.slice(0, 5).map(s => s.nombre).join(', '), reporte: true });
+  }
+  // nuevo producto
+  const mNew = q2.match(/^(?:agrega\w*|crea\w*|alta|da de alta|add|create|new)\s+(?:un\s+|una\s+|nuevo\s+|nueva\s+|a\s+)?(?:producto|articulo|repuesto|item|product|part)\s+(.+)$/);
+  if (mNew) {
+    let rest = mNew[1]; let precio = null, cant = 0;
+    const mp = rest.match(/\b(?:precio|a|price|at)\s+\$?(\d[\d.,]*)/); if (mp) { precio = parseNum(mp[1]); rest = rest.replace(mp[0], ' '); }
+    const mc = rest.match(/\b(?:cantidad|stock|qty|quantity)\s+(\d+)/); if (mc) { cant = +mc[1]; rest = rest.replace(mc[0], ' '); }
+    const nombre = cap(rest.replace(/\s+/g, ' ').trim());
+    if (!nombre) return R(L('¿Cómo se llama el producto?', 'What is the product called?'));
+    return proponer(L(`Creo el producto “${nombre}”${precio ? ' a ' + money(precio) : ''}${cant ? ' con ' + cant + ' en stock' : ''}.`, `Create product “${nombre}”${precio ? ' at ' + money(precio) : ''}${cant ? ' with ' + cant + ' in stock' : ''}.`), [{ op: 'add', col: 'stock', doc: { nombre, cantidad: cant, precio: precio || 0, minimo: 0 } }], { desc: L('Producto nuevo: ', 'New product: ') + nombre });
+  }
+  // cambiar precio
+  const mPr = q2.match(/\b(?:cambia\w*|actualiza\w*|pone\w*|ponele|sube\w*|baja\w*|set|change|update|raise|lower)\b.*?\bprecio\b.*?\b(?:de la|de las|de los|del|de|of)?\s*(.+?)\s+(?:a|en|to|at)\s+\$?(\d[\d.,]*)\s*$/);
+  if (mPr) {
+    const precio = parseNum(mPr[2]); const c = productosEn(mPr[1], 0.3);
+    const hacer = it => proponer(L(`Cambio el precio de ${it.nombre}: ${money(it.precio || 0)} → ${money(precio)}.`, `Change price of ${it.nombre}: ${money(it.precio || 0)} → ${money(precio)}.`), [{ op: 'upd', col: 'stock', id: it.id, patch: { precio } }], { desc: `${L('Precio', 'Price')} ${it.nombre} → ${money(precio)}` });
+    if (c.length === 1) return hacer(c[0]); if (c.length > 1) return elegir(c, i => i.nombre, hacer);
+    return noEncontre(mPr[1], L('el producto', 'the product'));
+  }
+  // consulta de precio
+  if (/\b(precio|cuanto sale|cuanto cuesta|cuesta|price|how much is|cost of|cuanto vale)\b/.test(q) && !/\b(presupuesto|quote)\b/.test(q)) {
+    const c = productosEn(q);
+    if (c.length) return R(c.map(s => `${s.nombre}: ${s.precio ? money(s.precio) : L('sin precio cargado', 'no price set')}`).join('\n'));
+    if (Store.all('stock').length) return R(L('No encuentro ese producto en el stock.', "I can't find that product in stock."));
+  }
+  // agregar / sacar stock
+  const mAdd = q2.match(/\b(?:agrega\w*|suma\w*|anota\w*|carga\w*|ingresa\w*|repone\w*|add|received|restock|llegaron|llego)\s+(\d+)\s+(?:unidades?\s+(?:de\s+)?|u\.?\s+de\s+|units? of\s+)?(.+?)(?:\s+(?:al|en el|en|a|to|into)\s+(?:el\s+|the\s+)?(?:stock|inventario|inventory))?$/);
+  if (mAdd && (/\b(stock|inventario|inventory|llegaron|llego|received|restock|repone\w*)\b/.test(q2)) ) {
+    const n = +mAdd[1]; const nombreQ = mAdd[2];
+    const c = productosEn(nombreQ, 0.3);
+    const hacer = it => proponer(L(`Sumo ${n} a ${it.nombre}: ${it.cantidad} → ${(+it.cantidad || 0) + n}.`, `Add ${n} to ${it.nombre}: ${it.cantidad} → ${(+it.cantidad || 0) + n}.`), [{ op: 'upd', col: 'stock', id: it.id, patch: { cantidad: (+it.cantidad || 0) + n } }], { desc: `+${n} ${it.nombre}` });
+    if (c.length === 1) return hacer(c[0]); if (c.length > 1) return elegir(c, i => i.nombre + ' (' + i.cantidad + ')', hacer);
+    const nom = cap(nombreQ.replace(/\b(unidades?|units?)\b/g, '').trim());
+    return proponer(L(`No tengo “${nom}” en el stock. ¿Lo creo como producto nuevo con ${n} ${plural(n, 'unidad', 'unidades')}?`, `“${nom}” isn't in stock. Create it as a new product with ${n} units?`), [{ op: 'add', col: 'stock', doc: { nombre: nom, cantidad: n, precio: 0, minimo: 0 } }], { desc: L('Producto nuevo: ', 'New product: ') + nom });
+  }
+  const mRem = q2.match(/\b(?:saca\w*|resta\w*|descuenta\w*|baja\w*|vendi\w*|usamos|use|gaste\w*|remove|sold|used|deduct)\s+(\d+)\s+(?:unidades?\s+(?:de\s+)?)?(.+?)(?:\s+(?:del|de el|from)\s+(?:stock|inventario|the stock|inventory))?$/);
+  if (mRem && /\b(stock|inventario|inventory|vendi\w*|usamos|sold|used|gaste\w*)\b/.test(q2)) {
+    const n = +mRem[1]; const c = productosEn(mRem[2], 0.3);
+    const hacer = it => { const nuevo = (+it.cantidad || 0) - n; return proponer(L(`Descuento ${n} de ${it.nombre}: ${it.cantidad} → ${Math.max(0, nuevo)}.`, `Deduct ${n} from ${it.nombre}: ${it.cantidad} → ${Math.max(0, nuevo)}.`) + (nuevo < 0 ? L('\n⚠️ Ojo: no alcanza el stock, quedaría en 0.', "\n⚠️ Not enough stock, it would go to 0.") : ''), [{ op: 'upd', col: 'stock', id: it.id, patch: { cantidad: Math.max(0, nuevo) } }], { desc: `-${n} ${it.nombre}` }); };
+    if (c.length === 1) return hacer(c[0]); if (c.length > 1) return elegir(c, i => i.nombre + ' (' + i.cantidad + ')', hacer);
+    return noEncontre(mRem[2], L('el producto', 'the product'));
+  }
+  // consulta de cantidad
+  if (/\b(cuanto|cuantos|cuantas|hay|queda|quedan|tengo|tenemos|stock|how many|do we have|in stock|have we)\b/.test(q)) {
+    const c = productosEn(q);
+    if (c.length) return R(c.map(lineaStock).join('\n'), { speak: c.slice(0, 3).map(s => L(`${s.nombre}: ${s.cantidad}`, `${s.nombre}: ${s.cantidad}`)).join('. ') });
+    if (/\bstock|inventario|inventory\b/.test(q)) return R(L('No encuentro ese producto en el stock.', "I can't find that product in stock."));
+  }
+  return null;
+}
+
+/* ---------- PERSONAS ---------- */
+function hPersonas(q, raw) {
+  const pl = new RegExp(`\\b(cliente|clientes|socio|socios|proveedor|proveedores|miembro|member|client|customer|supplier)\\b`);
+  const mIs = q.match(/^(?:is|does|are)\s+(.+?)\s+(?:a|an|listed as a|listed as an)\s+(customer|client|member|supplier)\s*\??$/);
+  const mEs = mIs ? [mIs[0], mIs[1], mIs[2]] : q.match(/^(?:el\s+|la\s+)?(.+?)\s+(?:es|is)\s+(?:un\s+|una\s+|a\s+|an\s+)?(socio|socia|cliente|clienta|proveedor|miembro|member|client|customer|supplier)\s*\??$/);
+  if (mEs) {
+    const c = personasEn(mEs[1]);
+    if (c.length === 0) return R(L(`No, “${cap(mEs[1])}” no figura como ${lab('persona')}.`, `No, “${cap(mEs[1])}” isn't listed as a ${lab('persona')}.`), { speak: L(`No, no figura.`, `No, not listed.`) });
+    if (c.length === 1) return R(L(`Sí, ${c[0].nombre} es ${lab('persona')}${c[0].nro ? ' (n° ' + c[0].nro + ')' : ''}${c[0].telefono ? ' · tel ' + c[0].telefono : ''}.`, `Yes, ${c[0].nombre} is a ${lab('persona')}${c[0].telefono ? ' · phone ' + c[0].telefono : ''}.`), { speak: L('Sí, figura.', 'Yes, listed.') });
+    return R(L(`Hay ${c.length} con ese nombre:\n`, `${c.length} match:\n`) + c.map(p => '• ' + p.nombre + (p.nota ? ' · ' + p.nota : '')).join('\n'));
+  }
+  const mTel = q.match(/\b(?:telefono|tel|celular|numero|whatsapp|phone|number)\s+(?:de\s+|del\s+|of\s+|for\s+)?(.+)$/);
+  if (mTel && !/\bagrega/.test(q)) {
+    const r = conPersona(mTel[1], p => R(p.telefono ? L(`El teléfono de ${p.nombre} es ${p.telefono}.`, `${p.nombre}'s phone is ${p.telefono}.`) : L(`No tengo teléfono de ${p.nombre}.`, `No phone for ${p.nombre}.`), p.telefono ? { speak: L(`El teléfono de ${p.nombre} es ${p.telefono.split('').join(' ')}`, `${p.nombre}'s phone is ${p.telefono.split('').join(' ')}`) } : {}));
+    if (r) return r; return noEncontre(mTel[1]);
+  }
+  const mAdd = raw.match(/^\s*(?:por favor\s+)?(?:agreg\w*|alta|cre\w*|sum\w*|add|new|register)\s+(?:un\s+|una\s+|nuevo\s+|nueva\s+|a\s+|a new\s+)?(?:socio|socia|cliente|clienta|miembro|member|client|customer)\s+(.+)$/i);
+  if (mAdd && !/\bstock\b/i.test(raw)) {
+    let rest = mAdd[1]; const tel = (rest.match(/(?:\+?\d[\d\s-]{6,}\d)/) || [''])[0]; if (tel) rest = rest.replace(tel, ' ');
+    const nro = (rest.match(/\b(?:n[°ºo.]?\s*|numero\s+|nro\.?\s*)(\d{1,6})\b/i) || [])[1]; if (nro) rest = rest.replace(/\b(?:n[°ºo.]?\s*|numero\s+|nro\.?\s*)\d{1,6}\b/i, ' ');
+    let nombre = cap(rest.replace(/[,;]/g, ' ').replace(/\s+/g, ' ').trim());
+    if (!nombre) return R(L('¿Cómo se llama?', 'What is the name?'));
+    const ya = personasEn(norm(nombre)).filter(p => norm(p.nombre) === norm(nombre));
+    if (ya.length) return R(L(`${ya[0].nombre} ya existe.`, `${ya[0].nombre} already exists.`));
+    const doc = { nombre, telefono: tel.replace(/[\s-]/g, ''), alias: [], nota: '' }; if (nro) doc.nro = nro;
+    return proponer(L(`Agrego ${lab('persona')} nuevo: ${nombre}${doc.telefono ? ' · tel ' + doc.telefono : ''}${nro ? ' · n° ' + nro : ''}.`, `Add new ${lab('persona')}: ${nombre}${doc.telefono ? ' · phone ' + doc.telefono : ''}.`), [{ op: 'add', col: 'personas', doc }], { desc: L('Nuevo: ', 'New: ') + nombre });
+  }
+  // apodos / alias
+  const mAl = q.match(/^(?:cuando (?:digo|diga)|when i say|llama\w*|decile)\s+(?:a\s+)?(.+?)\s+(?:me refiero a|es|a|means|i mean|as)\s+(.+)$/);
+  if (mAl) {
+    const c = personasEn(mAl[2]);
+    const hacer = p => proponer(L(`Recuerdo que “${mAl[1]}” es ${p.nombre}.`, `Remember that “${mAl[1]}” means ${p.nombre}.`), [{ op: 'upd', col: 'personas', id: p.id, patch: { alias: [...(p.alias || []), mAl[1]] } }], { desc: `alias ${mAl[1]} = ${p.nombre}` });
+    if (c.length === 1) return hacer(c[0]); if (c.length > 1) return elegir(c, p => p.nombre, hacer);
+  }
+  if (/^(buscame?|busca\w*|info(rmacion)?|quien es|datos de|find|who is|info on)\b/.test(q)) {
+    const r = conPersona(q, p => R(`${p.nombre}${p.nro ? ' · n° ' + p.nro : ''}${p.telefono ? '\n📞 ' + p.telefono : ''}${p.nota ? '\n📝 ' + p.nota : ''}`, { phone: p.telefono }));
+    if (r) return r;
+  }
+  return null;
+}
+
+/* ---------- REPORTES ---------- */
+function resumenPeriodo(d1, d2, titulo) {
+  const lin = []; const filas = [];
+  const ag = Store.all('agenda').filter(a => a.fecha >= d1 && a.fecha <= d2);
+  if (moduloActivo('agenda')) {
+    const act = ag.filter(a => a.estado !== 'cancelado');
+    lin.push(L(`📅 ${ucf(lab('agenda'))}: ${act.length}${ag.length !== act.length ? ' (' + (ag.length - act.length) + ' cancelados)' : ''}`, `📅 ${ucf(lab('agenda'))}: ${act.length}`));
+    filas.push([ucf(lab('agenda')), String(act.length)]);
+    if (d1 === d2) act.sort((x, y) => (x.hora || '').localeCompare(y.hora || '')).forEach(a => lin.push('   · ' + lineaAg(a)));
+  }
+  const sv = Store.all('servicios').filter(s => s.fecha >= d1 && s.fecha <= d2);
+  if (sv.length && (moduloActivo('reportes'))) {
+    const tot = sv.reduce((t, s) => t + (+s.importe || 0), 0), pend = sv.filter(s => s.pagado === false).reduce((t, s) => t + (+s.importe || 0), 0);
+    lin.push(L(`💰 ${ucf(lab('servicios'))}: ${sv.length} · total ${money(tot)} · cobrado ${money(tot - pend)} · pendiente ${money(pend)}`, `💰 ${ucf(lab('servicios'))}: ${sv.length} · total ${money(tot)} · collected ${money(tot - pend)} · pending ${money(pend)}`));
+    filas.push([ucf(lab('servicios')), `${sv.length} · ${money(tot)}`], [L('Cobrado', 'Collected'), money(tot - pend)], [L('Pendiente de cobro', 'Pending'), money(pend)]);
+  }
+  if (moduloActivo('accesos')) {
+    const ac = Store.all('accesos').filter(a => a.fecha >= d1 && a.fecha <= d2);
+    if (ac.length) { const i = ac.filter(a => a.tipo === 'ingreso').length, e = ac.filter(a => a.tipo === 'egreso').length; lin.push(L(`🚪 Ingresos: ${i} · Egresos: ${e}${d1 === d2 && d1 === todayIso() ? ' · Adentro ahora: ' + quienQueda().length : ''}`, `🚪 Entries: ${i} · Exits: ${e}`)); filas.push([L('Ingresos', 'Entries'), String(i)], [L('Egresos', 'Exits'), String(e)]); }
+  }
+  if (moduloActivo('facturas')) {
+    const fa = Store.all('facturas').filter(f => f.fecha >= d1 && f.fecha <= d2);
+    if (fa.length) { lin.push(L(`🧾 Facturas de compra: ${fa.length} · ${money(fa.reduce((t, f) => t + (+f.total || 0), 0))}`, `🧾 Purchase invoices: ${fa.length} · ${money(fa.reduce((t, f) => t + (+f.total || 0), 0))}`)); filas.push([L('Facturas de compra', 'Purchase invoices'), `${fa.length} · ${money(fa.reduce((t, f) => t + (+f.total || 0), 0))}`]); }
+  }
+  ctx.lastReportData = { titulo, d1, d2, filas, servicios: sv, agenda: ag };
+  return lin;
+}
+function hReportes(q, raw) {
+  const f = parseFecha(q);
+  const pidePdf = /\b(pdf|exporta\w*|export)\b/.test(q);
+  const esFact = /\b(cuanto|how much)\b.*\b(factur|vend|gan|cobr|sold|earn|bill|made|collected|revenue)/.test(q);
+  if (/\b(resumen|reporte|informe|balance|summary|report)\b/.test(q) || esFact || (pidePdf && ctx.lastReportData)) {
+    if (pidePdf && !/\b(resumen|reporte|informe|summary|report)\b/.test(q) && ctx.lastReportData) return R(L('Te armo el PDF del último reporte.', 'Building the PDF of the last report.'), { accionPdf: true });
+    let d1, d2, tit;
+    if (/\b(semana|week)\b/.test(q)) { const rg = rangoFechas({ iso: f ? f.iso : todayIso(), rango: 'semana' }); d1 = rg[0]; d2 = rg[1]; tit = L('Resumen de la semana', 'Weekly summary'); }
+    else if (/\b(mes|month)\b/.test(q)) { const rg = rangoFechas({ iso: f ? f.iso : todayIso(), rango: 'mes' }); d1 = rg[0]; d2 = rg[1]; tit = L('Resumen del mes', 'Monthly summary'); }
+    else { d1 = d2 = f ? f.iso : todayIso(); tit = L('Resumen del día ', 'Summary of ') + fmtFechaCorta(d1); }
+    const lin = resumenPeriodo(d1, d2, tit);
+    const al = d1 === d2 && d1 === todayIso() ? alertas() : [];
+    if (al.length) lin.push(L(`⚠️ Alertas (${al.length}): `, `⚠️ Alerts (${al.length}): `) + al.slice(0, 4).map(a => a.t).join(' · '));
+    const rec = Store.all('recordatorios').filter(r => !r.hecho && r.cuando.slice(0, 10) >= d1 && r.cuando.slice(0, 10) <= d2);
+    if (rec.length && moduloActivo('recordatorios')) lin.push(L('⏰ Recordatorios: ', '⏰ Reminders: ') + rec.map(r => r.cuando.slice(11) + ' ' + r.texto).join(' · '));
+    const t = tit + '\n' + (lin.length ? lin.join('\n') : L('No hay movimientos en ese período.', 'No activity in that period.'));
+    return R(t, { speak: tit + '. ' + lin.map(x => x.replace(/^\s*·\s*/, '')).slice(0, 5).join('. '), reporte: true, pdf: true });
+  }
+  if (/^(alertas?|avisos|alerts?)$|\b(hay alertas|tengo alertas|que alertas|any alerts|show alerts)\b/.test(q)) {
+    const a = alertas();
+    if (!a.length) return R(L('No hay alertas. Todo en orden. 👌', 'No alerts. All good. 👌'));
+    return R(L(`Tenés ${a.length} ${plural(a.length, 'alerta', 'alertas')}:\n`, `You have ${a.length} alert(s):\n`) + a.map(x => '• ' + x.t).join('\n'), { speak: L(`Tenés ${a.length} alertas. `, `${a.length} alerts. `) + a.slice(0, 4).map(x => x.t).join('. ') });
+  }
+  return null;
+}
+
+/* ---------- RECORDATORIOS ---------- */
+function hRecordatorios(q, raw) {
+  if (/^(mis\s+)?(recordatorios|pendientes|reminders)\b|\b(que recordatorios|que tengo pendiente|my reminders|show reminders|list reminders)\b/.test(q)) {
+    const l = Store.all('recordatorios').filter(r => !r.hecho).sort((a, b) => a.cuando.localeCompare(b.cuando));
+    if (!l.length) return R(L('No tenés recordatorios pendientes.', 'No pending reminders.'));
+    return R(L('Recordatorios:\n', 'Reminders:\n') + l.map((r, i) => `${i + 1}. ${rel(r.cuando.slice(0, 10))} ${r.cuando.slice(11)} — ${r.texto}`).join('\n'), { buttons: l.slice(0, 5).map((r, i) => ({ label: L(`✔ Hecho ${i + 1}`, `✔ Done ${i + 1}`), run: () => { aplicarTx([{ op: 'upd', col: 'recordatorios', id: r.id, patch: { hecho: true } }]); return R(L('Marcado como hecho.', 'Marked as done.'), { refrescar: true }); } })) });
+  }
+  const m = q.match(/^(?:por favor\s+)?(?:avisa\w*|recorda\w*|recuerda\w*|acuerda\w*|acordate|remind|set a reminder|reminder|recordatorio)\s*(?:me|te|nos)?\s*(?:(?:de|que|to|about)\b)?\s*(.*)$/);
+  if (m) {
+    let rest = m[1]; let cuando = null;
+    const en = rest.match(/\ben\s+(\d+)\s*(minutos?|min|horas?|hs|hours?|minutes?)\b/);
+    if (en) { const d = new Date(); const n = +en[1]; if (/^(min)/.test(en[2])) d.setMinutes(d.getMinutes() + n); else d.setHours(d.getHours() + n); cuando = iso(d) + 'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()); rest = rest.replace(en[0], ' '); }
+    let nota = '';
+    if (!cuando) {
+      const f = parseFecha(rest); if (f) rest = f.rest;
+      const h = parseHora(rest); if (h) rest = h.rest;
+      let fecha = f ? f.iso : null, hora = h ? h.hm : null;
+      if (!fecha) fecha = hora && hora > nowHM() ? todayIso() : (hora ? addDays(1) : addDays(1));
+      if (!hora) { hora = '09:00'; nota = L(' (a las 09:00, porque no dijiste hora)', ' (at 09:00, since no time was given)'); }
+      cuando = fecha + 'T' + hora;
+    }
+    let texto = detalleLimpio(rest.replace(/^(que|about)\s+/, ''), raw);
+    if (!texto) return R(L('¿Qué querés que te recuerde?', 'What should I remind you about?'));
+    return proponer(L(`Te aviso ${rel(cuando.slice(0, 10))} a las ${cuando.slice(11)}${nota}: ${texto}.`, `I'll remind you ${rel(cuando.slice(0, 10))} at ${cuando.slice(11)}${nota}: ${texto}.`), [{ op: 'add', col: 'recordatorios', doc: { cuando, texto, hecho: false, avisado: false } }], { desc: L('Recordatorio: ', 'Reminder: ') + texto });
+  }
+  return null;
+}
+
+/* ---------- PLANTILLAS, PRESUPUESTOS, WHATSAPP ---------- */
+const waLink = (tel, texto) => {
+  let n = String(tel || '').replace(/\D/g, '');
+  if (n) { if (n.startsWith('0')) n = n.replace(/^0+/, ''); if (!n.startsWith(Cfg.prefijoTel) && n.length <= 11) n = Cfg.prefijoTel + n; }
+  return `https://wa.me/${n}?text=${encodeURIComponent(texto)}`;
+};
+const llenar = (tpl, p) => tpl.replace(/\{nombre\}/gi, p ? p.nombre : '').replace(/\{negocio\}/gi, Cfg.negocio).replace(/\{fecha\}/gi, fmtFechaCorta(todayIso()));
+function hPlantillas(q, raw) {
+  const mSave = raw.match(/^\s*(?:guarda\w*|save|anota\w*)\s+(?:la\s+|una\s+|a\s+)?(?:respuesta|plantilla|template|reply)\s+["“']?(.+?)["”']?\s*[:=]\s*([\s\S]+)$/i);
+  if (mSave) { const nombre = mSave[1].trim(); return proponer(L(`Guardo la respuesta “${nombre}”:\n${mSave[2].trim()}`, `Save reply “${nombre}”:\n${mSave[2].trim()}`), [{ op: 'add', col: 'plantillas', doc: { nombre, texto: mSave[2].trim() } }], { desc: L('Respuesta guardada: ', 'Saved reply: ') + nombre }); }
+  if (/^(mis\s+)?(respuestas|plantillas|templates|replies)\b/.test(q)) { const l = Store.all('plantillas'); return R(l.length ? l.map(p => `• ${p.nombre}`).join('\n') : L('No hay respuestas guardadas.', 'No saved replies.')); }
+  // presupuesto
+  const mP = raw.match(/^\s*(?:hace\w*|arma\w*|genera\w*|make|create|prepare)?\s*(?:me\s+)?(?:un\s+|a\s+)?(presupuesto|cotizacion|cotización|budget|quote)\s+(?:para|a|for)?\s*(.*?)\s*[:\-]\s*(.+)$/i);
+  if (mP && /\b(presupuesto|cotizacion|budget|quote)\b/.test(q)) {
+    const pc = personasEn(norm(mP[2])); const persona = pc.length === 1 ? pc[0] : null;
+    const items = mP[3].split(/\s*[,;]\s*|\s+\by\b\s+|\s+and\s+/i).map(s => s.trim()).filter(Boolean);
+    const lin = []; let total = 0; const sinPrecio = [];
+    for (const it of items) {
+      const m = it.match(/^(?:(\d+)\s*(?:x|u\.?|unidades?)?\s+)?(.+?)(?:\s*x\s*(\d+))?(?:\s+(?:a\s+)?\$\s*(\d[\d.,]*)|\s+(?:a\s+)?(\d[\d.,]{2,}))?$/i);
+      if (!m) continue;
+      const cant = +(m[1] || m[3] || 1); let nombre = m[2].trim(); let precio = m[4] || m[5] ? parseNum(m[4] || m[5]) : null;
+      const prod = productosEn(norm(nombre), 0.3)[0];
+      if (precio == null && prod && prod.precio) precio = +prod.precio;
+      if (prod && !precio) precio = null;
+      const nombreShow = prod ? prod.nombre : cap(nombre);
+      if (precio == null) { sinPrecio.push(nombreShow); lin.push(`${cant} × ${nombreShow} — ${L('sin precio', 'no price')}`); }
+      else { total += cant * precio; lin.push(`${cant} × ${nombreShow} — ${money(cant * precio)}`); }
+    }
+    const nombreCli = persona ? persona.nombre : cap(mP[2]);
+    const t = L(`Presupuesto para ${nombreCli}\n`, `Quote for ${nombreCli}\n`) + lin.join('\n') + L(`\nTotal: ${money(total)}`, `\nTotal: ${money(total)}`) + (sinPrecio.length ? L(`\n⚠️ Falta el precio de: ${sinPrecio.join(', ')}. Decime el precio (ej: “${sinPrecio[0]} a 5000”).`, `\n⚠️ Missing price for: ${sinPrecio.join(', ')}.`) : '');
+    ctx.lastReportData = { titulo: L('Presupuesto - ', 'Quote - ') + nombreCli, filas: [], texto: t };
+    return R(t, { share: true, phone: persona ? persona.telefono : '', pdf: true, shareText: `${Cfg.negocio}\n${t}` });
+  }
+  // usar plantilla
+  const pl = Store.all('plantillas');
+  if (pl.length && /^(usa\w*|manda\w*|mostra\w*|dame|pasame|use|send|show|get)\b/.test(q)) {
+    const best = pl.map(p => ({ p, s: hitTokens(q, p.nombre).score })).sort((a, b) => b.s - a.s)[0];
+    if (best && best.s >= 0.6) {
+      const per = personasEn(q.replace(norm(best.p.nombre), ' ')); const persona = per.length === 1 ? per[0] : null;
+      const t = llenar(best.p.texto, persona);
+      return R(t, { share: true, phone: persona ? persona.telefono : '', shareText: t });
+    }
+  }
+  return null;
+}
+function hWhatsapp(q, raw) {
+  if (!/\b(whatsapp|wsp|wasap|whats app|wa)\b/.test(q)) return null;
+  const r = conPersona(q, p => {
+    let texto;
+    if (/\b(turno|trabajo|reserva|cita|appointment|job|booking)\b/.test(q)) {
+      const pr = proximosDe(p)[0];
+      if (!pr) return R(L(`${p.nombre} no tiene ${lab('agenda')} próximos.`, `${p.nombre} has no upcoming ${lab('agenda')}.`));
+      texto = L(`Hola ${p.nombre}, te confirmamos tu ${lab('agendaItem')} el ${fmtFecha(pr.fecha, 'es')}${pr.hora ? ' a las ' + pr.hora : ''}${pr.titulo ? ' (' + pr.titulo + ')' : ''}. ¡Te esperamos! — ${Cfg.negocio}`, `Hi ${p.nombre}, confirming your ${lab('agendaItem')} on ${fmtFecha(pr.fecha, 'en')}${pr.hora ? ' at ' + pr.hora : ''}. See you! — ${Cfg.negocio}`);
+    } else texto = ctx.lastBot || L(`Hola ${p.nombre}`, `Hi ${p.nombre}`);
+    return R(texto, { share: true, phone: p.telefono, shareText: texto, waDirecto: true });
+  });
+  return r || R(L('¿A quién se lo mando? Decime el nombre.', 'Who should I send it to?'));
+}
+
+/* ---------- Núcleo: ruteo de la frase ---------- */
+const KWMOD = {
+  accesos: /\b(ingres\w*|egres\w*|adentro|dentro|inside|check ?(in|out)|entr[oó]|salio|se fue|queda\w*)\b/,
+  agenda: /\b(turnos?|trabajos?|reservas?|citas?|agenda\w*|entregas?|appointments?|jobs?|bookings?|schedule|libre|free|available)\b/,
+  stock: /\b(stock|inventario|inventory|precio|price|faltantes?|reponer)\b/,
+  reportes: /\b(resumen|reporte|informe|balance|summary|report|alertas?|alerts?|factur\w+|pdf)\b/,
+  recordatorios: /\b(recordatorios?|recordame|avisame|reminders?|remind)\b/,
+  plantillas: /\b(presupuesto|cotizacion|plantillas?|respuestas?|guarda\w*|budget|quote|template|templates|replies|reply|save)\b/,
+  whatsapp: /\b(whatsapp|wsp|wasap)\b/,
+  historial: /\b(reparacion\w*|servicio\w*|service|debe|deuda|pendientes? de pago|historial)\b/
+};
+function seguimiento(q) {
+  const m = q.match(/^(?:y|and)\s+(.+?)\s*\??$/); if (!m || !ctx.last) return null;
+  const rest = m[1]; const f = parseFecha(rest);
+  if (f && ctx.last.kinds.includes('fecha')) return ctx.last.fn({ fecha: f });
+  if (ctx.last.kinds.includes('persona')) { const c = personasEn(rest); if (c.length === 1) return ctx.last.fn({ persona: c[0].nombre }); }
+  return null;
+}
+
+function interpretar(q, raw) {
+  // 1) respuestas a algo pendiente
+  // "no, el otro": cambia de opción en la última elección
+  if (/^no[, ]+\s*(?:es\s+|era\s+)?(?:el|la|the)\s+(?:otro|otra|other)\b|^(?:el|la)\s+otr[oa]$|^the other one$/.test(q) && ctx.lastChoice) {
+    ctx.pending = null;
+    const c = ctx.lastChoice; const resto = c.lista.map((x, i) => i).filter(i => i !== c.i);
+    if (resto.length === 1) { ctx.choice = c; return elegirIdx(resto[0]); }
+    if (resto.length > 1) { const lst = resto.map(i => c.lista[i]); return elegir(lst, c.etiqueta, c.cont, c.termino); }
+  }
+  if (ctx.pending && /^(si|sii+|dale|ok|okey|oka|confirmo|confirma|confirmar|aceptar|yes|yep|yeah|sure|confirm|de una|va|listo)\b/.test(q)) return confirmar(true);
+  if (ctx.pending && /^(no|nop|nope|cancela\w*|mejor no|cancel|dejalo|olvidalo)\b/.test(q)) return confirmar(false);
+  if (ctx.choice) {
+    const n = q.match(/^(?:el\s+|la\s+|n[°o]?\s*|opcion\s+)?(\d)\b/); if (n && +n[1] >= 1 && +n[1] <= ctx.choice.lista.length) return elegirIdx(+n[1] - 1);
+    const ord = { primero: 0, primera: 0, first: 0, segundo: 1, segunda: 1, second: 1, tercero: 2, tercera: 2, third: 2 }; const mo = q.match(/\b(primero|primera|first|segundo|segunda|second|tercero|tercera|third)\b/); if (mo && ord[mo[1]] < ctx.choice.lista.length) return elegirIdx(ord[mo[1]]);
+    const best = ctx.choice.lista.map((x, i) => ({ i, s: hitTokens(q, ctx.choice.etiqueta(x)).score })).sort((a, b) => b.s - a.s);
+    if (best[0] && best[0].s >= 0.6 && (!best[1] || best[0].s > best[1].s)) return elegirIdx(best[0].i);
+    if (/^(no|cancela\w*|ninguno|ninguna|none)\b/.test(q)) { ctx.choice = null; return R(L('Ok, lo dejo.', 'Ok, dropping it.')); }
+  }
+  if (/^(deshac\w*|undo|revert\w*|volve atras|anula lo ultimo|borra lo ultimo)\b|\b(deshace\w* lo ultimo|undo that|undo last)\b/.test(q)) return deshacer();
+  if (/^(rehac\w*|redo)\b/.test(q)) return rehacer();
+  const sg = seguimiento(q); if (sg) return sg;
+  if (/^(hola|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hey|hi|hello|good (morning|afternoon|evening))\b[\s!.]*$/.test(q) || (Cfg.voz.fraseActiva === false && q === norm(Cfg.asistente))) return R(Cfg.tono === 'amigable' ? L(`¡Hola! Soy ${Cfg.asistente} 😊 ¿En qué te ayudo?`, `Hi! I'm ${Cfg.asistente} 😊 How can I help?`) : L('Decime.', 'Tell me.'));
+  if (/^(ayuda|help|que podes hacer|que sabes hacer|comandos|what can you do|\?)$/.test(q)) return ayuda();
+  const mNom = q.match(/^(?:llamate|te llamas|tu nombre es|call yourself|your name is)\s+(.+)$/);
+  if (mNom) { Cfg.asistente = cap(mNom[1]); guardarCfg(); return R(L(`Ok, ahora me llamo ${Cfg.asistente}.`, `Ok, I'm now called ${Cfg.asistente}.`), { refrescar: true }); }
+  if (/^(resumen del dia|daily summary|resumen de hoy)$/.test(q) && moduloActivo('reportes') && Auth.puede('reportes')) { const r = hReportes(q, raw); if (r) return r; }
+  // 2) módulos
+  let apagado = null;
+  const orden = [['plantillas', hPlantillas], ['whatsapp', hWhatsapp], ['recordatorios', hRecordatorios], ['accesos', hAccesos], ['historial', hHistorial], ['agenda', hAgenda], ['stock', hStock], ['chat', hPersonas], ['reportes', hReportes]];
+  for (const [mod, fn] of orden) {
+    const kw = KWMOD[mod];
+    if (!moduloActivo(mod)) { if (kw && kw.test(q)) apagado = apagado || mod; continue; }
+    if (!Auth.puede(mod)) { if (kw && kw.test(q)) apagado = apagado || ('perm:' + mod); continue; }
+    const r = fn(q, raw); if (r) return r;
+  }
+  // Presupuesto/otros que no pasaron por KW
+  if (apagado) return R(apagado.startsWith('perm:') ? L('Tu usuario no tiene permiso para eso.', "Your user doesn't have permission for that.") : L(`Esa función (${MODULOS[apagado].es}) no está activada en esta app.`, `That feature (${MODULOS[apagado].en}) isn't enabled in this app.`));
+  return null;
+}
+
+function contextoDatos(raw) {
+  const q = norm(raw); const out = [`Hoy es ${fmtFecha(todayIso(), 'es')}. Negocio: ${Cfg.negocio}.`];
+  const ps = personasEn(q);
+  const sel = new Set(ps.map(p => p.id));
+  const linea = (col, d) => `${col}: ` + Object.entries(d).filter(([k, v]) => !['id', 'alias', 'por', 'avisado', 'hecho'].includes(k) && v !== '' && v != null && typeof v !== 'object').map(([k, v]) => `${k}=${v}`).join(', ');
+  Store.all('personas').filter(p => sel.has(p.id)).forEach(p => out.push(linea('persona', p)));
+  for (const col of ['servicios', 'agenda', 'accesos']) Store.all(col).filter(d => sel.has(d.personaId) || (!sel.size && col === 'agenda' && d.fecha >= todayIso()) ).slice(-25).forEach(d => out.push(linea(col, d)));
+  productosEn(q).forEach(s => out.push(linea('stock', s)));
+  if (!sel.size) Store.all('accesos').filter(a => a.fecha === todayIso()).forEach(d => out.push(linea('accesos', d)));
+  return out.slice(0, 80).join('\n');
+}
+
+async function procesarTexto(raw) {
+  raw = String(raw || '').trim(); if (!raw) return [];
+  const q = norm(raw);
+  let r = null;
+  try { r = interpretar(q, raw); } catch (e) { console.error(e); r = R(L('Uy, algo falló al interpretar eso. Probá de otra forma.', 'Oops, something went wrong. Try rephrasing.')); }
+  if (!r && IA.activa()) {
+    try {
+      const frase = await IA.reescribir(raw, ejemplosActivos());
+      if (frase) { const rr = interpretar(norm(frase), frase); if (rr) { r = [].concat(rr); r[0] = { ...r[0], text: '🤖 “' + frase + '”\n' + r[0].text }; } }
+      if (!r) { const datos = contextoDatos(raw); const txt = await IA.responderConDatos(raw, datos); r = R('🤖 ' + txt); }
+    } catch (e) { r = R(L('No pude entender eso' + (IA.activa() ? ' (la IA falló: ' + (e.message || e) + ')' : '') + '. Escribí “ayuda” para ver ejemplos.', "I couldn't understand that. Type “help” for examples.")); }
+  }
+  if (!r) r = R(L('No entendí eso. 🤔 Escribí “ayuda” para ver qué puedo hacer, o activá la IA en Configuración para frases más libres.', "I didn't get that. 🤔 Type “help” to see what I can do, or turn on AI in Settings for freer phrasing."));
+  const arr = [].concat(r);
+  const main = arr[0]; if (main && main.text) ctx.lastBot = main.shareText || main.text;
+  return arr;
+}
+
+/* ============ Facturas / fotos / importación de planillas ============ */
+const esPrecio = t => /^\$?\d{1,3}(?:[.,]\d{3})*(?:[.,]\d{1,2})?$|^\$?\d+(?:[.,]\d{1,2})?$/.test(t) && (/[.,]\d{1,2}$/.test(t) || parseNum(t) >= 100);
+
+function parseFacturaTexto(txt) {
+  const lines = String(txt).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  let proveedor = '', fecha = '', total = 0; const items = [];
+  for (const ln of lines) {
+    const lo = norm(ln);
+    const mf = ln.match(/\b(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})\b/);
+    if (mf && !fecha) { const y = mf[3].length === 2 ? 2000 + +mf[3] : +mf[3]; fecha = `${y}-${pad2(+mf[2])}-${pad2(+mf[1])}`; }
+    if (/\btotal\b/.test(lo) && !/subtotal/.test(lo)) { const n = ln.match(/(\d[\d.,]*)\s*$/); if (n) total = parseNum(n[1]); continue; }
+    if (/\b(subtotal|iva|cuit|cuil|factura|remito|fecha|cliente|domicilio|direccion|tel|telefono|condicion|vendedor|cae|punto de venta|pto|descuento|neto|importe|cant|descripcion|concepto|codigo|precio|original|duplicado|gracias|ingresos brutos)\b/.test(lo)) continue;
+    let rest = ln.replace(/\s{2,}/g, ' '); const parts = rest.split(' ');
+    const precios = [];
+    while (parts.length > 1 && precios.length < 2 && esPrecio(parts[parts.length - 1])) precios.unshift(parseNum(parts.pop()));
+    let desc = parts.join(' ').trim(); let cant = 1;
+    let m = desc.match(/^(\d{1,4}(?:[.,]\d+)?)\s*(?:x|u\.?|un\.?|unid\.?|uds?\.?)?\s+(?=[A-Za-zÁÉÍÓÚÑáéíóúñ])(.+)$/);
+    if (m) { cant = parseNum(m[1]); desc = m[2]; }
+    else { m = desc.match(/^(.+?)\s+x\s*(\d{1,4})$/i); if (m) { desc = m[1]; cant = +m[2]; } else { m = desc.match(/^(.+?)\s+(\d{1,3})\s*(?:u|un|unid|uds?)\.?$/i); if (m) { desc = m[1]; cant = +m[2]; } } }
+    if (!/[A-Za-zÁÉÍÓÚÑáéíóúñ]{3}/.test(desc)) continue;
+    if (!precios.length) { if (!proveedor && !/\d/.test(desc) && desc.length > 3) proveedor = cap(desc.toLowerCase()); continue; }
+    let unit = precios[0];
+    if (precios.length === 2) { const [a, b] = precios; unit = Math.abs(a * cant - b) <= Math.max(2, b * 0.02) ? a : (cant > 1 && Math.abs(b / cant - a) < 2 ? a : a); }
+    items.push({ nombre: desc.replace(/\s+/g, ' ').trim(), cantidad: cant, precio: unit });
+  }
+  if (!total) total = items.reduce((t, i) => t + i.cantidad * i.precio, 0);
+  return { proveedor, fecha: fecha || todayIso(), items, total };
+}
+
+function planFactura(fac) {
+  return fac.items.map(it => {
+    const m = productosEn(norm(it.nombre))[0];
+    return { ...it, prod: m || null };
+  });
+}
+function respuestaFactura(fac) {
+  const plan = planFactura(fac);
+  if (!plan.length) return R(L('No pude sacar productos de esa factura. Probá con una foto más clara, o pegá el texto con: “factura:” y una línea por producto (ej: 10 Cámara 26 2800).', "I couldn't read products from that invoice."));
+  const txt = L(`Leí esto${fac.proveedor ? ' de ' + fac.proveedor : ''} (${fmtFechaCorta(fac.fecha)}):\n`, `I read this${fac.proveedor ? ' from ' + fac.proveedor : ''} (${fmtFechaCorta(fac.fecha)}):\n`) +
+    plan.map(p => `• ${p.cantidad} × ${p.nombre} — ${money(p.precio)} c/u ${p.prod ? '→ ' + p.prod.nombre : L('→ (producto nuevo)', '→ (new product)')}`).join('\n') + `\nTotal: ${money(fac.total)}\n` +
+    L('No toqué nada. ¿Qué querés hacer?', "I haven't changed anything. What would you like to do?");
+  const mk = (tipo) => () => proponerFactura(fac, plan, tipo);
+  return R(txt, {
+    buttons: [
+      { label: L('📦 Sumar al stock', '📦 Add to stock'), run: mk('stock') }, { label: L('💲 Actualizar precios', '💲 Update prices'), run: mk('precios') },
+      { label: L('🧾 Solo guardar factura', '🧾 Just save invoice'), run: mk('guardar') }, { label: L('✅ Todo junto', '✅ Everything'), run: mk('todo') }, { label: L('🗑 Descartar', '🗑 Discard'), run: () => R(L('Descartada. No guardé nada.', 'Discarded. Nothing saved.')) }
+    ]
+  });
+}
+function proponerFactura(fac, plan, tipo) {
+  const tx = []; const lin = []; const margen = +Cfg.margen || 0;
+  const nuevos = {}; const acum = {};
+  for (const p of plan) {
+    if (tipo === 'stock' || tipo === 'todo') {
+      if (p.prod) { const cur = Store.get('stock', p.prod.id); const ant = acum[p.prod.id] != null ? acum[p.prod.id] : (+cur.cantidad || 0); const nue = ant + p.cantidad; acum[p.prod.id] = nue; tx.push({ op: 'upd', col: 'stock', id: p.prod.id, patch: { cantidad: nue } }); lin.push(`${p.prod.nombre}: ${ant} → ${nue}`); }
+      else { tx.push({ op: 'add', col: 'stock', doc: { nombre: cap(p.nombre), cantidad: p.cantidad, costo: p.precio, precio: Math.round(p.precio * (1 + margen / 100)), minimo: 0 } }); lin.push(L(`NUEVO ${cap(p.nombre)}: ${p.cantidad} u. (venta ${money(Math.round(p.precio * (1 + margen / 100)))})`, `NEW ${cap(p.nombre)}: ${p.cantidad} u.`)); nuevos[p.nombre] = 1; }
+    }
+    if ((tipo === 'precios' || tipo === 'todo') && p.prod && !nuevos[p.nombre]) {
+      const venta = Math.round(p.precio * (1 + margen / 100));
+      tx.push({ op: 'upd', col: 'stock', id: p.prod.id, patch: { costo: p.precio, precio: venta } });
+      lin.push(L(`${p.prod.nombre}: costo ${money(p.precio)} · venta ${money(p.prod.precio || 0)} → ${money(venta)}`, `${p.prod.nombre}: cost ${money(p.precio)} · price ${money(p.prod.precio || 0)} → ${money(venta)}`));
+    }
+  }
+  if (tipo === 'guardar' || tipo === 'todo') { tx.push({ op: 'add', col: 'facturas', doc: { fecha: fac.fecha, proveedor: fac.proveedor, items: fac.items, total: fac.total, estado: tipo === 'todo' ? 'aplicada' : 'guardada' } }); lin.push(L('Guardo la factura en el historial', 'Save the invoice in history')); }
+  if (!tx.length) return R(L('No hay nada que cambiar con esa opción (los productos son nuevos o no coinciden).', 'Nothing to change with that option.'));
+  const cab = { stock: L('Sumo al stock:', 'Add to stock:'), precios: L(`Actualizo precios (margen ${margen}%):`, `Update prices (margin ${margen}%):`), guardar: L('Guardo la factura:', 'Save invoice:'), todo: L('Aplico todo:', 'Apply all:') }[tipo];
+  return proponer(cab + '\n' + lin.map(x => '• ' + x).join('\n'), tx, { desc: L('Factura de ', 'Invoice from ') + (fac.proveedor || '—') + ' (' + tipo + ')' });
+}
+
+/* ---- OCR y lectura de imagen ---- */
+function cargarScript(src) { return new Promise((res, rej) => { if ([...document.scripts].some(s => s.src === src)) return res(); const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('No pude cargar ' + src)); document.head.appendChild(s); }); }
+async function ocrImagen(file) {
+  await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.1.1/tesseract.min.js');
+  const r = await Tesseract.recognize(file, 'spa');
+  return r.data.text;
+}
+async function archivoADataUrl(file, maxLado) {
+  const url = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(file); });
+  if (!/^data:image/.test(url)) return url;
+  const img = new Image(); img.src = url; await img.decode();
+  const k = Math.min(1, (maxLado || 1600) / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+  c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.85);
+}
+/* Foto recibida: NUNCA hace nada sola, pregunta qué es y qué hacer */
+function preguntarFoto(file, dataUrl) {
+  return R(L('Recibí la foto. ¿Qué es?', 'Got the photo. What is it?'), {
+    img: dataUrl,
+    buttons: [
+      { label: L('🧾 Es una factura', '🧾 An invoice'), run: () => leerFacturaFoto(file, dataUrl) },
+      { label: L('🔧 Es una cosa / pieza', '🔧 An item / part'), run: () => leerCosaFoto(dataUrl) },
+      { label: L('Nada, ignorar', 'Nothing, ignore'), run: () => R(L('Ok, la ignoro.', 'Ok, ignoring it.')) }
+    ]
+  });
+}
+async function leerFacturaFoto(file, dataUrl) {
+  const intento = [];
+  if (IA.puedeVer()) { try { const j = await IA.leerFactura(dataUrl); if (j && Array.isArray(j.items) && j.items.length) return respuestaFactura({ proveedor: j.proveedor || '', fecha: /^\d{4}-\d{2}-\d{2}$/.test(j.fecha || '') ? j.fecha : todayIso(), items: j.items.map(i => ({ nombre: String(i.nombre || ''), cantidad: +i.cantidad || 1, precio: +i.precio || 0 })).filter(i => i.nombre), total: +j.total || 0 }); } catch (e) { intento.push(e.message); } }
+  try { const t = await ocrImagen(file); const fac = parseFacturaTexto(t); if (fac.items.length) return respuestaFactura(fac); intento.push(L('el OCR no encontró productos', 'OCR found no products')); } catch (e) { intento.push(e.message); }
+  return R(L('No pude leer la factura automáticamente' + (intento.length ? ' (' + intento.join('; ') + ')' : '') + '.\nPodés pegarme el texto así:\nfactura:\n10 Cámara 26 2800\n2 Cadena 9v 8500\n(cantidad, producto y precio unitario por línea)', "I couldn't read the invoice automatically.\nPaste the text like:\nfactura:\n10 Cámara 26 2800"));
+}
+async function leerCosaFoto(dataUrl) {
+  if (IA.puedeVer()) { try { const d = await IA.describirCosa(dataUrl); const c = productosEn(norm(d)); return R(`🤖 ${d}` + (c.length ? L('\nCoincide con el stock: ', '\nMatches stock: ') + c.slice(0, 3).map(lineaStock).join(' | ') : L('\nNo veo algo igual en el stock.', '\nNothing like it in stock.')) + L('\nDecime qué hago (por ejemplo: “agregá 2 al stock”).', '\nTell me what to do.')); } catch (e) { return R(L('No pude analizar la foto: ', "Couldn't analyze the photo: ") + e.message); } }
+  return R(L('Para reconocer piezas por foto necesito la IA en línea activada (Configuración → IA). Mientras tanto decime qué es y qué hago, por ejemplo: “agregá 2 cámara 26 al stock”.', 'To recognize parts from photos I need the online AI enabled. Meanwhile tell me what it is and what to do.'));
+}
+
+/* ---- Importar planillas (texto pegado / CSV / Excel) ---- */
+function detectarSep(l) { const c = { '\t': (l.match(/\t/g) || []).length, ';': (l.match(/;/g) || []).length, ',': (l.match(/,/g) || []).length }; return Object.entries(c).sort((a, b) => b[1] - a[1])[0][1] ? Object.entries(c).sort((a, b) => b[1] - a[1])[0][0] : ','; }
+function parseTabla(texto) {
+  const lines = String(texto).split(/\r?\n/).filter(l => l.trim()); if (!lines.length) return { head: [], rows: [] };
+  const sep = detectarSep(lines[0]);
+  const cells = l => { const out = []; let cur = '', q = false; for (const ch of l) { if (ch === '"') q = !q; else if (ch === sep && !q) { out.push(cur.trim()); cur = ''; } else cur += ch; } out.push(cur.trim()); return out; };
+  const all = lines.map(cells);
+  return { head: all[0].map(norm), rows: all.slice(1) };
+}
+function mapaCols(head) {
+  const find = (re) => head.findIndex(h => re.test(h));
+  return { nombre: find(/^(nombre|name|producto|articulo|descripcion|cliente|socio|item|detalle)/), tel: find(/(telefono|tel|celular|phone|movil|whatsapp)/), nro: find(/^(n°|nro|numero|socio n|n socio|id|codigo|code)/), cant: find(/(cantidad|cant|stock|qty|existencia|unidades)/), precio: find(/(precio|price|venta|pvp)/), costo: find(/(costo|cost)/), min: find(/(minimo|min|reposicion)/) };
+}
+function importarTexto(texto, tipo) {
+  const t = parseTabla(texto); const m = mapaCols(t.head);
+  if (!tipo || tipo === 'auto') tipo = (m.cant >= 0 || m.precio >= 0) ? 'stock' : 'personas';
+  const filas = t.rows.filter(r => r.some(Boolean));
+  const tx = []; let nuevos = 0, actualizados = 0, salteados = 0;
+  const ni = m.nombre >= 0 ? m.nombre : 0;
+  for (const r of filas) {
+    const nombre = (r[ni] || '').trim(); if (!nombre) { salteados++; continue; }
+    if (tipo === 'stock') {
+      const doc = { nombre: cap(nombre), cantidad: m.cant >= 0 ? (parseNum(r[m.cant]) || 0) : 0, precio: m.precio >= 0 ? (parseNum(r[m.precio]) || 0) : 0, minimo: m.min >= 0 ? (parseNum(r[m.min]) || 0) : 0 };
+      if (m.costo >= 0) doc.costo = parseNum(r[m.costo]) || 0;
+      const ex = Store.all('stock').find(s => norm(s.nombre) === norm(nombre));
+      if (ex) { const patch = {}; if (m.cant >= 0) patch.cantidad = doc.cantidad; if (m.precio >= 0) patch.precio = doc.precio; if (m.min >= 0) patch.minimo = doc.minimo; tx.push({ op: 'upd', col: 'stock', id: ex.id, patch }); actualizados++; }
+      else { tx.push({ op: 'add', col: 'stock', doc }); nuevos++; }
+    } else {
+      const ex = Store.all('personas').find(p => norm(p.nombre) === norm(nombre));
+      if (ex) { salteados++; continue; }
+      const doc = { nombre: cap(nombre), telefono: m.tel >= 0 ? String(r[m.tel] || '').replace(/[\s-]/g, '') : '', alias: [], nota: '' };
+      if (m.nro >= 0 && r[m.nro]) doc.nro = r[m.nro];
+      tx.push({ op: 'add', col: 'personas', doc }); nuevos++;
+    }
+  }
+  return { tipo, tx, nuevos, actualizados, salteados, total: filas.length, cols: m };
+}
+async function leerArchivoTabla(file) {
+  if (/\.xlsx?$/i.test(file.name)) {
+    await cargarScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+    const wb = XLSX.read(await file.arrayBuffer(), { type: 'array' });
+    return XLSX.utils.sheet_to_csv(wb.Sheets[wb.SheetNames[0]], { FS: ';' });
+  }
+  return await file.text();
+}
+
+/* ============ PDF hecho a mano (sin librerías ni internet) ============ */
+const HELV_W = [278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,
+  667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,
+  556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+const CP1252 = {'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8A,'‹':0x8B,'Œ':0x8C,'Ž':0x8E,'‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9A,'›':0x9B,'œ':0x9C,'ž':0x9E,'Ÿ':0x9F};
+function chW(ch) { const c = ch.charCodeAt(0); if (c >= 32 && c <= 126) return HELV_W[c - 32]; const b = ch.normalize('NFD').charCodeAt(0); if (b >= 32 && b <= 126) return HELV_W[b - 32]; return 556; }
+function strW(s, size, bold) { let w = 0; for (const ch of s) w += chW(ch); return w / 1000 * size * (bold ? 1.08 : 1); }
+function pdfStr(s) {
+  let out = '';
+  for (const ch of s) {
+    const c = ch.codePointAt(0);
+    if (c > 0xFFFF || c === 0x200D || c === 0xFE0F) continue;
+    let b;
+    if (ch === '→') b = 62; else if (ch === '×') b = 0xD7;
+    else if (c < 256 && !(c >= 0x80 && c < 0xA0)) b = c; else if (CP1252[ch]) b = CP1252[ch]; else b = 63;
+    if (b < 32) b = 32;
+    if (b === 40 || b === 41 || b === 92) out += '\\';
+    out += String.fromCharCode(b);
+  }
+  return '(' + out + ')';
+}
+function wrapPdf(text, maxW, size, bold) {
+  const out = [];
+  for (const para of String(text == null ? '' : text).split(/\r?\n/)) {
+    let cur = '';
+    for (let w of para.split(/\s+/).filter(Boolean)) {
+      while (strW(w, size, bold) > maxW) { let k = 1; while (k < w.length && strW(w.slice(0, k + 1), size, bold) <= maxW) k++; if (cur) { out.push(cur); cur = ''; } out.push(w.slice(0, k)); w = w.slice(k); }
+      const t = cur ? cur + ' ' + w : w;
+      if (strW(t, size, bold) <= maxW) cur = t; else { out.push(cur); cur = w; }
+    }
+    out.push(cur);
+  }
+  return out.length ? out : [''];
+}
+async function logoJpeg() {
+  const img = new Image(); img.src = Cfg.logo || './icon-192.png'; await img.decode();
+  const c = document.createElement('canvas'); c.width = Math.min(256, img.naturalWidth); c.height = Math.round(c.width * img.naturalHeight / img.naturalWidth);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.92));
+  return { bytes: new Uint8Array(await blob.arrayBuffer()), w: c.width, h: c.height };
+}
+/* bloques: [{titulo, cols:[[nombre, peso]], rows:[[celdas]]}] */
+async function buildPdf({ titulo, sub, bloques, texto }) {
+  const ancho = Math.max(...bloques.map(b => b.cols.length), 0) > 5;
+  const W = ancho ? 842 : 595, H = ancho ? 595 : 842, M = 28, TW = W - 2 * M;
+  let logo = null; try { logo = await logoJpeg(); } catch (_) {}
+  const pages = []; let ops, yt;
+  const f = n => String(Math.round(n * 100) / 100);
+  const T = (x, ytop, s, size, bold, col) => { const c = col || [0, 0, 0]; ops.push(`BT /${bold ? 'F2' : 'F1'} ${size} Tf ${c[0]} ${c[1]} ${c[2]} rg ${f(x)} ${f(H - ytop)} Td ${pdfStr(s)} Tj ET`); };
+  const Rc = (x, ytop, w, h, c) => ops.push(`${c[0]} ${c[1]} ${c[2]} rg ${f(x)} ${f(H - ytop - h)} ${f(w)} ${f(h)} re f`);
+  const lh = 10, padX = 4, padY = 4;
+  const hex = (Cfg.color || '#3b82f6').replace('#', ''); const brand = [0, 2, 4].map(i => (parseInt(hex.substr(i, 2), 16) || 60) / 255 * 0.55);
+  function newPage(first) {
+    ops = []; pages.push(ops); yt = M;
+    if (first) {
+      if (logo) ops.push(`q 40 0 0 40 ${M} ${H - M - 40} cm /Im1 Do Q`);
+      const x0 = M + (logo ? 50 : 0);
+      T(x0, M + 16, titulo, 15, true, [0.06, 0.14, 0.25]);
+      (sub || []).forEach((s, i) => T(x0, M + 30 + i * 11, s, 8.5, false, [0.35, 0.35, 0.35]));
+      yt = M + 54;
+    } else { T(M, yt + 8, titulo, 8, false, [0.4, 0.4, 0.4]); yt += 18; }
+  }
+  newPage(true);
+  if (texto) { for (const ln of wrapPdf(texto, TW, 10, false)) { if (yt + 12 > H - M - 14) newPage(false); T(M, yt + 10, ln, 10, false); yt += 13; } yt += 6; }
+  for (const b of bloques) {
+    if (yt + 40 > H - M - 14) newPage(false);
+    if (b.titulo) { T(M, yt + 10, b.titulo, 11, true, [0.06, 0.14, 0.25]); yt += 16; }
+    const tot = b.cols.reduce((s, c) => s + c[1], 0); const cols = b.cols.map(c => [c[0], c[1] / tot * TW]);
+    const header = () => { Rc(M, yt, TW, 16, brand); let x = M; for (const [n, w] of cols) { T(x + padX, yt + 11.5, n, 8, true, [1, 1, 1]); x += w; } yt += 16; };
+    header();
+    if (!b.rows.length) { T(M + padX, yt + 14, L('Sin registros.', 'No records.'), 9, false, [0.3, 0.3, 0.3]); yt += 22; }
+    b.rows.forEach((r, i) => {
+      const wr = r.map((c, ci) => wrapPdf(String(c == null ? '' : c), cols[ci][1] - 2 * padX, 8, false));
+      const nl = Math.max(...wr.map(a => a.length)); const rh = nl * lh + 2 * padY - 2;
+      if (yt + rh > H - M - 14) { newPage(false); header(); }
+      if (i % 2 === 1) Rc(M, yt, TW, rh, [0.95, 0.96, 0.98]);
+      let x = M; wr.forEach((ls, ci) => { ls.forEach((ln, li) => T(x + padX, yt + padY + 7 + li * lh, ln, 8, false)); x += cols[ci][1]; });
+      yt += rh; ops.push(`0.88 0.88 0.9 RG 0.4 w ${f(M)} ${f(H - yt)} m ${f(M + TW)} ${f(H - yt)} l S`);
+    });
+    yt += 14;
+  }
+  pages.forEach((p, idx) => { ops = p; T(M, H - 14, Cfg.negocio + ' · ' + L('generado con Motor IA', 'made with AI Engine'), 7.5, false, [0.5, 0.5, 0.5]); const pg = L(`Página ${idx + 1} de ${pages.length}`, `Page ${idx + 1} of ${pages.length}`); T(W - M - strW(pg, 7.5, false), H - 14, pg, 7.5, false, [0.5, 0.5, 0.5]); });
+  const enc = s => { const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i) & 255; return u; };
+  const chunks = [], offs = []; let pos = 0; const push = u => { chunks.push(u); pos += u.length; };
+  const obj = (n, body, stream) => { offs[n] = pos; push(enc(`${n} 0 obj\n${body}\n`)); if (stream) { push(enc('stream\n')); push(stream); push(enc('\nendstream\n')); } push(enc('endobj\n')); };
+  push(enc('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n'));
+  const n = pages.length; const kids = pages.map((_, k) => `${6 + 2 * k} 0 R`).join(' ');
+  obj(1, '<< /Type /Catalog /Pages 2 0 R >>'); obj(2, `<< /Type /Pages /Kids [${kids}] /Count ${n} >>`);
+  obj(3, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'); obj(4, '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>');
+  if (logo) obj(5, `<< /Type /XObject /Subtype /Image /Width ${logo.w} /Height ${logo.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${logo.bytes.length} >>`, logo.bytes); else obj(5, 'null');
+  pages.forEach((p, k) => { const content = enc(p.join('\n')); obj(6 + 2 * k, `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> /XObject << /Im1 5 0 R >> >> /Contents ${7 + 2 * k} 0 R >>`); obj(7 + 2 * k, `<< /Length ${content.length} >>`, content); });
+  const total = 6 + 2 * n; const xref = pos; let x = `xref\n0 ${total}\n0000000000 65535 f \n`;
+  for (let i = 1; i < total; i++) x += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+  x += `trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`; push(enc(x));
+  return new Blob(chunks, { type: 'application/pdf' });
+}
+
+async function pdfDeReporte(d) {
+  const sub = [L('Generado el ', 'Generated on ') + fmtFechaCorta(todayIso()) + ' ' + nowHM() + ' · ' + nombreUsuario()];
+  if (d.texto) return buildPdf({ titulo: d.titulo, sub, texto: d.texto, bloques: [] });
+  const bloques = [];
+  if (d.filas && d.filas.length) bloques.push({ titulo: L('Resumen', 'Summary'), cols: [[L('Concepto', 'Item'), 3], [L('Valor', 'Value'), 2]], rows: d.filas });
+  if (d.agenda && d.agenda.length) bloques.push({ titulo: ucf(lab('agenda')), cols: [[L('Fecha', 'Date'), 2], [L('Hora', 'Time'), 1], [L('Nombre', 'Name'), 3], [L('Detalle', 'Detail'), 4], [L('Estado', 'Status'), 2]], rows: d.agenda.sort((a, b) => (a.fecha + (a.hora || '')).localeCompare(b.fecha + (b.hora || ''))).map(a => [fmtFechaCorta(a.fecha), a.hora || '', a.personaNombre, a.titulo || '', a.estado || '']) });
+  if (d.servicios && d.servicios.length) bloques.push({ titulo: ucf(lab('servicios')), cols: [[L('Fecha', 'Date'), 2], [L('Nombre', 'Name'), 3], [L('Detalle', 'Detail'), 4], [L('Importe', 'Amount'), 2], [L('Pagado', 'Paid'), 1]], rows: d.servicios.map(s => [fmtFechaCorta(s.fecha), s.personaNombre, s.detalle, s.importe ? money(s.importe) : '', s.pagado === false ? L('NO', 'NO') : L('Sí', 'Yes')]) });
+  return buildPdf({ titulo: d.titulo, sub, bloques });
+}
+
+/* ============ Pantalla ============ */
+const UI = {
+  tab: 'chat', datosCol: 'personas', unlocked: false, fotoPend: null,
+
+  toast(t, ms) { const e = $('#toast'); e.textContent = t; e.style.display = 'block'; clearTimeout(this._tt); this._tt = setTimeout(() => e.style.display = 'none', ms || 2600); },
+  scroll() { const m = $('#msgs'); m.scrollTop = m.scrollHeight; },
+
+  /* ---- mensajes ---- */
+  yo(text) { const d = document.createElement('div'); d.className = 'm me'; d.textContent = text; $('#msgs').appendChild(d); this.scroll(); },
+  bot(r, opts) {
+    const d = document.createElement('div'); d.className = 'm bot';
+    if (r.img) { const i = document.createElement('img'); i.className = 'foto'; i.src = r.img; d.appendChild(i); }
+    const t = document.createElement('div'); t.innerHTML = esc(r.text || '').replace(/\n/g, '<br>'); d.appendChild(t);
+    const btns = []; (r.buttons || []).forEach(b => btns.push({ label: b.label, run: b.run, pri: b.label.includes('✅') || b.label.startsWith('Sí') || b.label.startsWith('Yes') }));
+    if (r.share && moduloActivo('whatsapp')) btns.push({ label: '📲 WhatsApp', run: () => { window.open(waLink(r.phone, r.shareText || r.text), '_blank'); return null; } });
+    if (r.pdf && moduloActivo('reportes')) btns.push({ label: '📄 PDF', run: async () => { await UI.generarPdf(); return null; } });
+    if (r.accionPdf) setTimeout(() => this.generarPdf(), 50);
+    if (btns.length) {
+      const bx = document.createElement('div'); bx.className = 'btns';
+      btns.forEach(b => { const el = document.createElement('button'); el.textContent = b.label; if (b.pri) el.className = 'pri'; el.onclick = async () => { if (r.propuesta) $$('button', bx).forEach(x => x.disabled = true); await UI.correr(b.run); }; bx.appendChild(el); });
+      d.appendChild(bx);
+    }
+    $('#msgs').appendChild(d); this.scroll();
+    if (r.refrescar) this.refrescarDatos();
+    if (!(opts && opts.mudo)) Voz.hablar(r.speak || r.text);
+  },
+  async correr(run) {
+    let res; try { res = await run(); } catch (e) { res = R('⚠️ ' + (e.message || e)); }
+    if (res) [].concat(res).forEach((x, i) => this.bot(x, { mudo: i > 0 }));
+    this.refrescarDatos();
+  },
+  async enviar(texto, desdeVoz) {
+    texto = String(texto || '').trim(); if (!texto) return;
+    this.yo(texto);
+    if (/^factura\s*:/i.test(texto) && /\n/.test(texto)) { const f = parseFacturaTexto(texto.replace(/^factura\s*:/i, '')); return this.correr(() => respuestaFactura(f)); }
+    const tp = document.createElement('div'); tp.className = 'm bot typing'; tp.textContent = '…'; $('#msgs').appendChild(tp); this.scroll();
+    let arr; try { arr = await procesarTexto(texto); } finally { tp.remove(); }
+    arr.forEach((x, i) => this.bot(x, { mudo: i > 0 }));
+    this.refrescarDatos();
+  },
+
+  /* ---- pdf ---- */
+  async generarPdf() {
+    const d = ctx.lastReportData; if (!d) { this.toast(L('No hay reporte para exportar.', 'No report to export.')); return; }
+    const blob = await pdfDeReporte(d); const nombre = (d.titulo || 'reporte').replace(/[^\w-]+/g, '_') + '.pdf';
+    const file = new File([blob], nombre, { type: 'application/pdf' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file], title: d.titulo }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    descargar(blob, nombre);
+  },
+
+  /* ---- barra superior, alertas, datos ---- */
+  marca() {
+    $('#hLogo').src = Cfg.logo || './icon-192.png';
+    $('#hNom').textContent = Cfg.negocio; $('#hSub').textContent = `${Cfg.asistente} · ${nombreUsuario()}`;
+    document.title = Cfg.negocio + ' · ' + L('Asistente', 'Assistant');
+    const r = document.documentElement; r.style.setProperty('--acc', Cfg.color); r.dataset.theme = Cfg.tema === 'auto' ? '' : Cfg.tema; if (Cfg.tema === 'auto') delete r.dataset.theme; r.dataset.big = String(!!Cfg.letraGrande);
+    $('#banner').style.display = Licencia.estado === 'demo' ? 'block' : 'none';
+    $('#banner').textContent = Licencia.estado === 'vencida' ? L('Licencia vencida', 'License expired') : Licencia.estado === 'invalida' ? L('Licencia inválida', 'Invalid license') : L('MODO DEMO · datos de ejemplo · todas las funciones activas', 'DEMO MODE · sample data · all features on');
+    if (Licencia.estado !== 'demo' && Licencia.estado !== 'ok') $('#banner').style.display = 'block';
+    $('#in').placeholder = L(`Escribile a ${Cfg.asistente}…`, `Message ${Cfg.asistente}…`);
+    $('#tabChat').textContent = '💬 ' + L('Chat', 'Chat'); $('#tabDatos').textContent = '📋 ' + L('Datos', 'Data'); $('#tabLog').textContent = '🕘 ' + L('Historial', 'History');
+    this.chips(); this.alertas();
+  },
+  chips() {
+    const box = $('#chips'); box.innerHTML = '';
+    let lista = Cfg.chips; if (!lista || !lista.length) lista = (PERFILES[Cfg.perfil] || PERFILES.taller).chips.map(c => [c[0], c[1]]);
+    lista.forEach(([lbl, cmd]) => { const b = document.createElement('button'); b.textContent = lbl; b.onclick = () => this.enviar(cmd); box.appendChild(b); });
+  },
+  alertas() {
+    const el = $('#alertbar'); if (!moduloActivo('alertas') || !Auth.puede('alertas')) { el.style.display = 'none'; return; }
+    const a = alertas(); if (!a.length) { el.style.display = 'none'; return; }
+    el.style.display = 'block'; el.textContent = '⚠️ ' + L(`${a.length} ${plural(a.length, 'alerta', 'alertas')}: `, `${a.length} alert(s): `) + a[0].t + (a.length > 1 ? ' …' : '');
+  },
+  refrescarDatos() { this.alertas(); if (this.tab === 'datos') this.renderDatos(); if (this.tab === 'log') this.renderLog(); },
+  setTab(t) { this.tab = t; $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); $$('.view').forEach(v => v.classList.toggle('on', v.id === 'v-' + t)); if (t === 'datos') this.renderDatos(); if (t === 'log') this.renderLog(); },
+
+  renderDatos() {
+    const cols = [['personas', ucf(lab('personas'))], ['stock', 'Stock'], ['agenda', ucf(lab('agenda'))], ['servicios', ucf(lab('servicios'))], ['accesos', L('Ingresos', 'Entries')], ['recordatorios', L('Recordatorios', 'Reminders')], ['facturas', L('Facturas', 'Invoices')], ['plantillas', L('Respuestas', 'Replies')]]
+      .filter(([c]) => ({ stock: 'stock', agenda: 'agenda', servicios: 'historial', accesos: 'accesos', recordatorios: 'recordatorios', facturas: 'facturas', plantillas: 'plantillas', personas: 'chat' }[c]) ? moduloActivo({ stock: 'stock', agenda: 'agenda', servicios: 'historial', accesos: 'accesos', recordatorios: 'recordatorios', facturas: 'facturas', plantillas: 'plantillas', personas: 'chat' }[c]) : true);
+    if (!cols.find(c => c[0] === this.datosCol)) this.datosCol = cols[0][0];
+    const sub = $('#datosSub'); sub.innerHTML = '';
+    cols.forEach(([c, n]) => { const b = document.createElement('button'); b.textContent = `${n} (${Store.all(c).length})`; b.className = c === this.datosCol ? 'on' : ''; b.onclick = () => { this.datosCol = c; this.renderDatos(); }; sub.appendChild(b); });
+    const q = norm($('#datosQ').value || ''); const box = $('#datosList'); box.innerHTML = '';
+    const items = Store.all(this.datosCol).slice().sort((a, b) => ((b.fecha || b.cuando || '') + (b.hora || '')).localeCompare((a.fecha || a.cuando || '') + (a.hora || '')) || String(a.nombre || '').localeCompare(String(b.nombre || '')));
+    const titulo = d => d.nombre || d.personaNombre || d.texto || d.proveedor || '';
+    const detalle = d => { switch (this.datosCol) {
+      case 'personas': return [d.telefono && '📞 ' + d.telefono, d.nro && 'n° ' + d.nro, d.nota, (d.alias || []).length && L('apodos: ', 'aliases: ') + d.alias.join(', ')].filter(Boolean).join(' · ');
+      case 'stock': return `${d.cantidad} u. · ${money(d.precio || 0)}${d.costo ? ' · costo ' + money(d.costo) : ''}${d.minimo ? ' · mín ' + d.minimo : ''}`;
+      case 'agenda': return `${fmtFechaCorta(d.fecha)} ${d.hora || ''} · ${d.titulo || ''} · ${d.estado || ''}`;
+      case 'servicios': return `${fmtFechaCorta(d.fecha)} · ${d.detalle} · ${d.importe ? money(d.importe) : ''}${d.pagado === false ? ' · ' + L('PENDIENTE', 'UNPAID') : ''}`;
+      case 'accesos': return `${fmtFechaCorta(d.fecha)} ${d.hora} · ${d.tipo}${d.conQuien ? ' · ' + L('con ', 'with ') + d.conQuien : ''}`;
+      case 'recordatorios': return `${fmtFechaCorta(d.cuando.slice(0, 10))} ${d.cuando.slice(11)}${d.hecho ? ' ✔' : ''}`;
+      case 'facturas': return `${fmtFechaCorta(d.fecha)} · ${(d.items || []).length} ${L('ítems', 'items')} · ${money(d.total || 0)} · ${d.estado}`;
+      default: return d.texto || ''; } };
+    const f = items.filter(d => !q || norm(titulo(d) + ' ' + detalle(d)).includes(q));
+    if (!f.length) box.innerHTML = `<div class="note" style="padding:14px">${L('Sin registros.', 'No records.')}</div>`;
+    f.slice(0, 200).forEach(d => {
+      const r = document.createElement('div'); r.className = 'row';
+      r.innerHTML = `${Auth.esDueno() ? '<button class="acc" title="borrar">🗑</button>' : ''}<b>${esc(titulo(d))}</b><small>${esc(detalle(d))}</small>`;
+      const x = r.querySelector('.acc'); if (x) x.onclick = () => { if (confirm(L('¿Borrar este registro?', 'Delete this record?'))) { const inv = aplicarTx([{ op: 'del', col: this.datosCol, id: d.id }]); ctx.undo.push({ desc: L('Borrado: ', 'Deleted: ') + titulo(d), inv }); Store.add('log', { ts: new Date().toISOString(), user: nombreUsuario(), texto: L('Borrado manual: ', 'Manual delete: ') + titulo(d) }); this.toast(L('Borrado. Podés decir “deshacer”.', 'Deleted. You can say “undo”.')); this.refrescarDatos(); } };
+      box.appendChild(r);
+    });
+  },
+  renderLog() {
+    const box = $('#logList'); box.innerHTML = '';
+    const l = Store.all('log').slice().sort((a, b) => b.ts.localeCompare(a.ts)).slice(0, 150);
+    if (!l.length) box.innerHTML = `<div class="note" style="padding:14px">${L('Todavía no hay acciones registradas.', 'No actions recorded yet.')}</div>`;
+    l.forEach(x => { const r = document.createElement('div'); r.className = 'row'; const dt = new Date(x.ts); r.innerHTML = `<b>${esc(x.texto)}</b><small>${fmtFechaCorta(iso(dt))} ${pad2(dt.getHours())}:${pad2(dt.getMinutes())} · ${esc(x.user)}</small>`; box.appendChild(r); });
+  },
+
+  /* ---- voz ---- */
+  estadoVoz(e, txt) {
+    const mic = $('#mic'), live = $('#live');
+    if (e === 'escuchando') { mic.classList.add('on'); live.textContent = L('Escuchando…', 'Listening…'); }
+    else if (e === 'parcial') live.textContent = '🎤 ' + txt;
+    else if (e === 'fin') { mic.classList.remove('on'); live.textContent = Voz.manosLibres ? L('Manos libres activo', 'Hands-free on') : ''; }
+    else if (e === 'error') { mic.classList.remove('on'); live.textContent = L('Micrófono: ', 'Mic: ') + txt; }
+    else if (e === 'nosoporte') this.toast(L('Este navegador no permite hablarle. Probá con Chrome.', 'This browser has no speech input. Try Chrome.'));
+    $('#hf').classList.toggle('hf', Voz.manosLibres);
+  },
+  estadoIA() { const e = $('#iaEstado'); if (e) e.textContent = IA.estado; const s = $('#iaPill'); if (s) s.textContent = IA.activa() ? '🤖 IA' : ''; },
+
+  /* ---- PIN ---- */
+  pedirPin() {
+    return new Promise(res => {
+      const m = $('#mPin'); m.classList.add('on'); const i = $('#pinIn'); i.value = ''; $('#pinErr').textContent = ''; setTimeout(() => i.focus(), 60);
+      const ok = async () => { if (await sha256hex('motor' + i.value) === Cfg.pinHash) { m.classList.remove('on'); cleanup(); res(true); } else $('#pinErr').textContent = L('PIN incorrecto', 'Wrong PIN'); };
+      const no = () => { m.classList.remove('on'); cleanup(); res(false); };
+      const cleanup = () => { $('#pinOk').onclick = null; $('#pinNo').onclick = null; };
+      $('#pinOk').onclick = ok; $('#pinNo').onclick = no; i.onkeydown = e => { if (e.key === 'Enter') ok(); };
+    });
+  },
+  async abrirConfig() {
+    if (!Auth.esDueno()) { this.toast(L('La configuración es solo para el dueño.', 'Settings are for the owner only.')); return; }
+    if (Cfg.pinHash && !this.unlocked) { if (!(await this.pedirPin())) return; this.unlocked = true; }
+    this.renderConfig(); $('#sCfg').classList.add('on');
+  },
+
+  /* ---- panel de configuración ---- */
+  renderConfig() {
+    const sw = (path, label, extra) => `<label class="sw"><span>${label}${extra ? `<br><span class="note">${extra}</span>` : ''}</span><input type="checkbox" data-cfg="${path}" ${get(path) ? 'checked' : ''}></label>`;
+    const get = p => p.split('.').reduce((o, k) => o == null ? o : o[k], Cfg);
+    const sel = (path, label, opts) => `<div class="f"><label>${label}</label><select data-cfg="${path}">${opts.map(([v, n]) => `<option value="${esc(v)}" ${String(get(path)) === String(v) ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select></div>`;
+    const inp = (path, label, type, ph) => `<div class="f"><label>${label}</label><input type="${type || 'text'}" data-cfg="${path}" value="${esc(get(path) == null ? '' : get(path))}" placeholder="${esc(ph || '')}"></div>`;
+    const voces = Voz.vocesDelIdioma();
+    const usr = Cfg.usuarios.map((u, i) => `<div class="row"><div class="f"><label>${L('Nombre', 'Name')}</label><input type="text" data-u="${i}.nombre" value="${esc(u.nombre)}"></div>
+      <div class="f"><label>${L('Rol', 'Role')}</label><select data-u="${i}.rol"><option value="dueno" ${u.rol === 'dueno' ? 'selected' : ''}>${L('Dueño (todo)', 'Owner (all)')}</option><option value="empleado" ${u.rol === 'empleado' ? 'selected' : ''}>${L('Empleado', 'Employee')}</option></select></div>
+      ${u.rol === 'empleado' ? `<div class="note">${L('Puede usar:', 'Can use:')}</div>` + Object.keys(MODULOS).map(m => `<label class="sw"><span>${MODULOS[m][Cfg.idioma]}</span><input type="checkbox" data-um="${i}.${m}" ${(u.modulos || []).includes(m) ? 'checked' : ''}></label>`).join('') : ''}
+      ${i > 0 ? `<button class="big bad" data-udel="${i}">${L('Quitar usuario', 'Remove user')}</button>` : ''}</div>`).join('');
+    const lic = Licencia.estado === 'ok' ? `<span class="pill ok">${L('Activa', 'Active')}</span> ${esc(Licencia.datos.c || '')} ${Licencia.datos.v ? L('· vence ', '· expires ') + fmtFechaCorta(Licencia.datos.v) : ''}` : Licencia.estado === 'demo' ? `<span class="pill warn">${L('Modo demo', 'Demo mode')}</span>` : `<span class="pill bad">${Licencia.estado === 'vencida' ? L('Vencida', 'Expired') : L('Inválida', 'Invalid')}</span>`;
+    $('#cfgBody').innerHTML = `
+    <details open><summary>🏷️ ${L('Negocio y marca', 'Business and brand')}</summary><div class="in">
+      ${sel('perfil', L('Rubro (perfil)', 'Business type'), Object.values(PERFILES).map(p => [p.id, p.icono + ' ' + p.L[Cfg.idioma].nombre]))}
+      ${inp('negocio', L('Nombre del negocio', 'Business name'))}
+      <div class="f"><label>${L('Logo (opcional)', 'Logo (optional)')}</label><input type="file" id="logoFile" accept="image/*"></div>
+      <div class="f"><label>${L('Color', 'Color')}</label><input type="color" data-cfg="color" value="${esc(Cfg.color)}"></div>
+      ${inp('margen', L('Margen de ganancia % (para actualizar precios con facturas)', 'Profit margin % (for price updates from invoices)'), 'number')}
+      ${inp('prefijoTel', L('Prefijo de teléfono para WhatsApp (Argentina: 549)', 'Phone prefix for WhatsApp'))}
+    </div></details>
+    <details><summary>🤖 ${L('Asistente', 'Assistant')}</summary><div class="in">
+      ${inp('asistente', L('Nombre o apodo del asistente', 'Assistant name or nickname'))}
+      ${sel('idioma', L('Idioma', 'Language'), [['es', 'Español'], ['en', 'English']])}
+      ${sel('tono', L('Tono', 'Tone'), [['corto', L('Corto y directo', 'Short and direct')], ['amigable', L('Amigable', 'Friendly')]])}
+      ${sw('resumenAuto', L('Mostrar el resumen del día al abrir la app', 'Show the daily summary when opening'), L('Si lo apagás, solo aparece cuando lo pedís (“resumen”).', 'If off, it only shows when you ask (“summary”).'))}
+      ${sw('resumenHablado', L('Leer el resumen en voz alta', 'Read the summary aloud'))}
+    </div></details>
+    <details><summary>🎤 ${L('Voz', 'Voice')}</summary><div class="in">
+      ${sw('voz.hablar', L('Que me hable (leer respuestas)', 'Speak answers aloud'))}
+      <div class="f"><label>${L('Voz (elegí una: hay de mujer y de hombre según tu celular)', 'Voice (pick one)')}</label><select data-cfg="voz.voiceURI"><option value="">${L('Automática', 'Automatic')}</option>${voces.map(v => `<option value="${esc(v.voiceURI)}" ${Cfg.voz.voiceURI === v.voiceURI ? 'selected' : ''}>${esc(v.name)} (${esc(v.lang)})</option>`).join('')}</select></div>
+      <div class="f"><label>${L('Velocidad', 'Speed')}</label><input type="range" min="0.6" max="1.6" step="0.1" data-cfg="voz.velocidad" value="${Cfg.voz.velocidad}"></div>
+      <div class="f"><label>${L('Volumen', 'Volume')}</label><input type="range" min="0.2" max="1" step="0.1" data-cfg="voz.volumen" value="${Cfg.voz.volumen}"></div>
+      <button class="big sec" id="probarVoz">🔊 ${L('Probar voz', 'Test voice')}</button>
+      ${sw('voz.fraseActiva', L('Palabra de activación (opcional)', 'Wake phrase (optional)'), L('Solo en modo manos libres: responde solo si empezás diciendo la frase.', 'Hands-free mode only: it answers only if you start with the phrase.'))}
+      ${inp('voz.fraseTexto', L('Frase (vacío = “oye” + nombre del asistente)', 'Phrase (empty = “hey” + assistant name)'), 'text', 'oye ' + Cfg.asistente.toLowerCase())}
+      <div class="note">${Voz.soportaEntrada() ? '' : '⚠️ ' + L('Este navegador no permite hablarle (probá con Chrome).', 'This browser has no speech input.')} ${L('En Chrome el reconocimiento de voz suele usar internet.', 'Chrome speech recognition usually needs internet.')}</div>
+    </div></details>
+    <details><summary>🧠 ${L('Inteligencia (IA)', 'Intelligence (AI)')}</summary><div class="in">
+      ${sel('ia.modo', L('Qué IA usar', 'Which AI'), [['reglas', L('Sin IA (solo reglas, siempre funciona)', 'No AI (rules only, always works)')], ['local', L('Gemma local (sin internet)', 'Local Gemma (offline)')], ['online', L('En línea (Gemini)', 'Online (Gemini)')], ['local+online', L('Local con respaldo en línea', 'Local with online fallback')]])}
+      <div class="note">${L('La IA solo se usa cuando las reglas no entienden la frase. Nunca guarda nada sin tu “Sí”.', 'AI is only used when rules fail. It never saves anything without your “Yes”.')}</div>
+      ${inp('ia.key', L('Clave de API de Gemini (para IA en línea y fotos)', 'Gemini API key (online AI and photos)'), 'password')}
+      ${inp('ia.modelo', L('Modelo en línea', 'Online model'))}
+      <div class="f"><label>${L('Archivo del modelo Gemma (.task / .litertlm), se guarda en este equipo', 'Gemma model file (.task / .litertlm), stored on this device')}</label><input type="file" id="modeloFile"></div>
+      <button class="big sec" id="probarOnline">${L('Probar conexión con Gemini', 'Test Gemini connection')}</button>
+      <div class="note" id="probarRes"></div>
+      <button class="big sec" id="cargarModelo">${L('Cargar modelo guardado', 'Load saved model')}</button>
+      <div class="note">${L('Estado local: ', 'Local status: ')}<b id="iaEstado">${esc(IA.estado)}</b></div>
+    </div></details>
+    <details><summary>🧩 ${L('Módulos (qué funciones usa esta app)', 'Modules (features for this app)')}</summary><div class="in">
+      ${Object.keys(MODULOS).map(m => `<label class="sw"><span>${MODULOS[m][Cfg.idioma]}${Licencia.permite(m) ? '' : ' 🔒'}</span><input type="checkbox" data-mod="${m}" ${Cfg.modulos[m] ? 'checked' : ''} ${Licencia.permite(m) ? '' : 'disabled'}></label>`).join('')}
+      <button class="big sec" id="modPerfil">${L('Dejar solo los del rubro elegido', 'Keep only the business type defaults')}</button>
+    </div></details>
+    <details><summary>👥 ${L('Usuarios y permisos', 'Users and permissions')}</summary><div class="in">${usr}<button class="big sec" id="addUser">+ ${L('Agregar usuario', 'Add user')}</button></div></details>
+    <details><summary>🎨 ${L('Apariencia', 'Appearance')}</summary><div class="in">
+      ${sel('tema', L('Tema', 'Theme'), [['auto', L('Automático', 'Auto')], ['dark', L('Oscuro', 'Dark')], ['light', L('Claro', 'Light')]])}
+      ${sw('letraGrande', L('Letra grande', 'Large text'))}
+      <div class="f"><label>${L('Atajos del chat (uno por línea: Etiqueta|frase)', 'Chat shortcuts (one per line: Label|phrase)')}</label><textarea id="chipsTxt">${esc((Cfg.chips || (PERFILES[Cfg.perfil] || PERFILES.taller).chips).map(c => c.join('|')).join('\n'))}</textarea></div>
+      <button class="big sec" id="guardarChips">${L('Guardar atajos', 'Save shortcuts')}</button>
+    </div></details>
+    <details><summary>🔒 ${L('Seguridad', 'Security')}</summary><div class="in">
+      <div class="f"><label>${L('PIN para entrar a la configuración (vacío = sin PIN)', 'Settings PIN (empty = none)')}</label><input type="password" id="pinNuevo" inputmode="numeric" placeholder="${Cfg.pinHash ? '••••' : ''}"></div>
+      <button class="big sec" id="guardarPin">${L('Guardar PIN', 'Save PIN')}</button>
+      <div class="note">${L('La huella digital se suma en la versión de app Android.', 'Fingerprint comes with the Android app version.')}</div>
+    </div></details>
+    <details><summary>🔑 ${L('Licencia', 'License')}</summary><div class="in">
+      <div>${lic}</div>
+      <div class="f"><label>${L('Código de licencia', 'License code')}</label><textarea id="licIn">${esc(Cfg.licencia)}</textarea></div>
+      <button class="big" id="licOk">${L('Activar', 'Activate')}</button><button class="big sec" id="licNo">${L('Volver a modo demo', 'Back to demo mode')}</button>
+      <div class="note">${L('Protección básica. Para cortar el acceso de verdad a un cliente que no paga, se valida contra un servidor (se suma con Firebase/Android).', 'Basic protection. Real revocation needs a server check (added with Firebase/Android).')}</div>
+    </div></details>
+    <details><summary>☁️ ${L('Datos y copias de seguridad', 'Data and backups')}</summary><div class="in">
+      <div class="note">${L('Guardado ahora en: ', 'Currently stored in: ')}<b>${Store.backend === 'firebase' ? 'Firebase' : L('este equipo', 'this device')}</b></div>
+      <div class="f"><label>${L('Configuración de Firebase (pegá el firebaseConfig como JSON)', 'Firebase config (paste as JSON)')}</label><textarea id="fbCfg" placeholder='{"apiKey":"...","authDomain":"...","projectId":"..."}'>${esc(Cfg.firebase.config)}</textarea></div>
+      ${inp('firebase.email', L('Email de Firebase (si tu proyecto pide login)', 'Firebase email (if login required)'), 'email')}
+      <div class="f"><label>${L('Contraseña (no se guarda)', 'Password (not stored)')}</label><input type="password" id="fbPass"></div>
+      <button class="big sec" id="fbConectar">${L('Conectar a Firebase', 'Connect to Firebase')}</button>
+      <button class="big sec" id="expBackup">⬇️ ${L('Exportar copia (archivo)', 'Export backup (file)')}</button>
+      <div class="f"><label>${L('Importar copia', 'Import backup')}</label><input type="file" id="impBackup" accept=".json"></div>
+      <button class="big sec" id="abrirImport">📥 ${L('Importar planilla (Excel / CSV / pegar)', 'Import spreadsheet (Excel / CSV / paste)')}</button>
+      <button class="big sec" id="cargarDemo">${L('Cargar datos de ejemplo del rubro', 'Load sample data for this business type')}</button>
+      <button class="big bad" id="borrarTodo">${L('Borrar todos los datos', 'Delete all data')}</button>
+    </div></details>`;
+    this.bindConfig();
+  },
+  bindConfig() {
+    const setPath = (p, v) => { const k = p.split('.'); let o = Cfg; while (k.length > 1) o = o[k.shift()]; o[k[0]] = v; };
+    $$('[data-cfg]', $('#cfgBody')).forEach(el => { el.onchange = el.oninput = () => {
+      const p = el.dataset.cfg; let v = el.type === 'checkbox' ? el.checked : el.type === 'range' || el.type === 'number' ? parseFloat(el.value) : el.value;
+      const antes = p === 'perfil' ? Cfg.perfil : null;
+      setPath(p, v); guardarCfg();
+      if (p === 'perfil' && v !== antes) { const pf = PERFILES[v]; Cfg.modulos = Object.fromEntries(Object.keys(MODULOS).map(m => [m, pf.modulos.includes(m)])); guardarCfg(); if (confirm(L('¿Cargar también los datos de ejemplo de este rubro? (reemplaza los datos actuales)', 'Also load sample data for this business type? (replaces current data)'))) { cargarDemo(v); Cfg.demoCargada = true; guardarCfg(); } this.renderConfig(); }
+      if (p === 'idioma' || p === 'asistente' || p === 'perfil') this.renderConfig();
+      this.marca(); if (p.startsWith('ia.')) { this.estadoIA(); }
+    }; });
+    $$('[data-mod]', $('#cfgBody')).forEach(el => el.onchange = () => { Cfg.modulos[el.dataset.mod] = el.checked; guardarCfg(); this.marca(); });
+    $$('[data-u]', $('#cfgBody')).forEach(el => el.onchange = () => { const [i, k] = el.dataset.u.split('.'); Cfg.usuarios[i][k] = el.value; if (k === 'rol' && el.value === 'empleado' && !(Cfg.usuarios[i].modulos || []).length) Cfg.usuarios[i].modulos = ['chat', 'agenda', 'stock']; guardarCfg(); this.renderConfig(); this.marca(); });
+    $$('[data-um]', $('#cfgBody')).forEach(el => el.onchange = () => { const [i, m] = el.dataset.um.split('.'); const l = new Set(Cfg.usuarios[i].modulos || []); el.checked ? l.add(m) : l.delete(m); Cfg.usuarios[i].modulos = [...l]; guardarCfg(); });
+    $$('[data-udel]', $('#cfgBody')).forEach(el => el.onclick = () => { const i = +el.dataset.udel; if (Cfg.usuarioActual === Cfg.usuarios[i].id) Cfg.usuarioActual = Cfg.usuarios[0].id; Cfg.usuarios.splice(i, 1); guardarCfg(); this.renderConfig(); this.marca(); });
+    $('#addUser').onclick = () => { Cfg.usuarios.push({ id: uid(), nombre: L('Nuevo usuario', 'New user'), rol: 'empleado', modulos: ['chat', 'agenda', 'stock'] }); guardarCfg(); this.renderConfig(); };
+    $('#logoFile').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; Cfg.logo = await archivoADataUrl(f, 160); guardarCfg(); this.marca(); this.toast(L('Logo guardado', 'Logo saved')); };
+    $('#probarVoz').onclick = () => Voz.hablar(L(`Hola, soy ${Cfg.asistente}. ¿Así me escuchás bien?`, `Hi, I'm ${Cfg.asistente}. Can you hear me well?`), true);
+    $('#modeloFile').onchange = (e) => { const f = e.target.files[0]; if (f) IA.cargarLocal(f); };
+    $('#cargarModelo').onclick = () => IA.cargarLocal(null);
+    $('#probarOnline').onclick = async () => { const o = $('#probarRes'); o.textContent = '⏳ …'; const t0 = Date.now(); try { const r = await IA._online('Respondé solo: OK'); o.textContent = '✅ ' + (r || '(vacío)') + ' · ' + Cfg.ia.modelo + ' · ' + Math.round((Date.now() - t0) / 100) / 10 + ' s'; } catch (e) { o.textContent = '❌ ' + e.message; } };
+    $('#modPerfil').onclick = () => { const pf = PERFILES[Cfg.perfil]; Cfg.modulos = Object.fromEntries(Object.keys(MODULOS).map(m => [m, pf.modulos.includes(m)])); guardarCfg(); this.renderConfig(); this.marca(); };
+    $('#guardarChips').onclick = () => { const l = $('#chipsTxt').value.split('\n').map(x => x.split('|')).filter(a => a.length >= 2 && a[0].trim()).map(a => [a[0].trim(), a.slice(1).join('|').trim()]); Cfg.chips = l.length ? l : null; guardarCfg(); this.chips(); this.toast(L('Atajos guardados', 'Shortcuts saved')); };
+    $('#guardarPin').onclick = async () => { const v = $('#pinNuevo').value.trim(); Cfg.pinHash = v ? await sha256hex('motor' + v) : ''; guardarCfg(); this.unlocked = true; this.toast(v ? L('PIN guardado', 'PIN saved') : L('PIN quitado', 'PIN removed')); };
+    $('#licOk').onclick = async () => { const code = $('#licIn').value.trim(); const r = await Licencia.verificar(code); if (!r.ok) { this.toast(r.motivo); return; } Cfg.licencia = code; guardarCfg(); await Licencia.aplicar(); if (Licencia.datos && Licencia.datos.c && Cfg.negocio === 'Mi Negocio') Cfg.negocio = Licencia.datos.c; guardarCfg(); this.marca(); this.renderConfig(); this.toast(L('Licencia activada', 'License activated')); };
+    $('#licNo').onclick = async () => { Cfg.licencia = ''; guardarCfg(); await Licencia.aplicar(); this.marca(); this.renderConfig(); };
+    $('#expBackup').onclick = () => descargar(new Blob([JSON.stringify({ app: 'motor-ia', v: 1, cfg: { ...Cfg, pinHash: '' }, datos: Store.dump() }, null, 1)], { type: 'application/json' }), `copia-${Cfg.negocio.replace(/\W+/g, '_')}-${todayIso()}.json`);
+    $('#impBackup').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; const j = safeJSON(await f.text(), null); if (!j || !j.datos) { this.toast(L('Archivo inválido', 'Invalid file')); return; } if (!confirm(L('Esto reemplaza los datos actuales. ¿Seguro?', 'This replaces current data. Sure?'))) return; Store.replaceAll(j.datos); this.toast(L('Copia importada', 'Backup imported')); this.refrescarDatos(); };
+    $('#cargarDemo').onclick = () => { if (confirm(L('Esto reemplaza los datos actuales por ejemplos. ¿Seguro?', 'This replaces current data with samples. Sure?'))) { cargarDemo(Cfg.perfil); Cfg.demoCargada = true; guardarCfg(); this.toast(L('Datos de ejemplo cargados', 'Sample data loaded')); this.refrescarDatos(); } };
+    $('#borrarTodo').onclick = () => { if (confirm(L('¿Borrar TODOS los datos? No se puede deshacer.', 'Delete ALL data? This cannot be undone.'))) { Store.clearAll(); ctx.undo = []; this.toast(L('Datos borrados', 'Data deleted')); this.refrescarDatos(); } };
+    $('#fbConectar').onclick = async () => { const raw = $('#fbCfg').value.trim(); const c = safeJSON(raw.replace(/^[^{]*|[^}]*$/g, ''), null); if (!c || !c.projectId) { this.toast(L('Config inválida: pegá el objeto firebaseConfig', 'Invalid config')); return; } Cfg.firebase.config = raw; guardarCfg(); try { this.toast(L('Conectando…', 'Connecting…')); await Store.conectarFirebase(c, Cfg.firebase.email, $('#fbPass').value); this.toast(L('Conectado a Firebase ✔', 'Connected to Firebase ✔')); this.renderConfig(); this.refrescarDatos(); } catch (e) { this.toast('Firebase: ' + (e.message || e), 5000); } };
+    $('#abrirImport').onclick = () => this.abrirImport();
+  },
+
+  /* ---- importar planilla ---- */
+  abrirImport() { $('#sImp').classList.add('on'); $('#impTxt').value = ''; $('#impRes').innerHTML = ''; this._imp = null; },
+  previewImport() {
+    const t = $('#impTxt').value; if (!t.trim()) { $('#impRes').innerHTML = ''; return; }
+    const r = importarTexto(t, $('#impTipo').value); this._imp = r;
+    $('#impRes').innerHTML = `<div class="row"><b>${L('Se va a cargar como: ', 'Will be loaded as: ')}${r.tipo === 'stock' ? 'Stock' : ucf(lab('personas'))}</b><br><small>${L(`${r.total} filas · ${r.nuevos} nuevas · ${r.actualizados} actualizadas · ${r.salteados} salteadas`, `${r.total} rows · ${r.nuevos} new · ${r.actualizados} updated · ${r.salteados} skipped`)}</small></div>`;
+  },
+  confirmarImport() {
+    const r = this._imp; if (!r || !r.tx.length) { this.toast(L('No hay nada para importar', 'Nothing to import')); return; }
+    const inv = aplicarTx(r.tx); ctx.undo.push({ desc: L('Importación de planilla', 'Spreadsheet import'), inv });
+    Store.add('log', { ts: new Date().toISOString(), user: nombreUsuario(), texto: L(`Importé ${r.nuevos} nuevos y actualicé ${r.actualizados} (${r.tipo})`, `Imported ${r.nuevos} new, ${r.actualizados} updated (${r.tipo})`) });
+    $('#sImp').classList.remove('on'); $('#sCfg').classList.remove('on'); this.toast(L('Importado. Podés decir “deshacer”.', 'Imported. You can say “undo”.')); this.refrescarDatos(); this.bot(R(L(`Importé ${r.nuevos} nuevos y actualicé ${r.actualizados}.`, `Imported ${r.nuevos} new and updated ${r.actualizados}.`)), { mudo: true });
+  },
+
+  /* ---- recordatorios ---- */
+  chequearRecordatorios() {
+    const ahora = todayIso() + 'T' + nowHM();
+    Store.all('recordatorios').filter(r => !r.hecho && !r.avisado && r.cuando <= ahora).forEach(r => {
+      Store.update('recordatorios', r.id, { avisado: true });
+      const msg = R(L('⏰ Recordatorio: ', '⏰ Reminder: ') + r.texto, { buttons: [{ label: L('✔ Hecho', '✔ Done'), run: () => { Store.update('recordatorios', r.id, { hecho: true }); return R(L('Listo.', 'Done.'), { refrescar: true }); } }, { label: L('Posponer 10 min', 'Snooze 10 min'), run: () => { const d = new Date(Date.now() + 600000); Store.update('recordatorios', r.id, { cuando: iso(d) + 'T' + pad2(d.getHours()) + ':' + pad2(d.getMinutes()), avisado: false }); return R(L('Te aviso en 10 minutos.', "I'll remind you in 10 minutes.")); } }] });
+      this.bot(msg); this.alertas();
+      try { if ('Notification' in window && Notification.permission === 'granted') new Notification(Cfg.negocio, { body: r.texto }); } catch (_) {}
+    });
+  },
+
+  /* ---- inicio ---- */
+  async iniciar() {
+    Store.init('bike');
+    if (!localStorage.getItem('motor_cfg')) { const pf = PERFILES[Cfg.perfil]; Cfg.modulos = Object.fromEntries(Object.keys(MODULOS).map(m => [m, pf.modulos.includes(m)])); guardarCfg(); }
+    if (!Store.all('personas').length && !Cfg.demoCargada) { cargarDemo(Cfg.perfil); Cfg.demoCargada = true; guardarCfg(); }
+    await Licencia.aplicar();
+    if (Cfg.firebase.config) { const c = safeJSON(Cfg.firebase.config.replace(/^[^{]*|[^}]*$/g, ''), null); if (c) Store.conectarFirebase(c, '', '').catch(() => {}); }
+    this.marca();
+    $$('.tabs button').forEach(b => b.onclick = () => this.setTab(b.dataset.t));
+    $('#send').onclick = () => { const v = $('#in').value; $('#in').value = ''; $('#in').style.height = ''; this.enviar(v); };
+    $('#in').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#send').click(); } };
+    $('#in').oninput = () => { const t = $('#in'); t.style.height = 'auto'; t.style.height = Math.min(120, t.scrollHeight) + 'px'; };
+    Voz.onTexto = (t) => this.enviar(t, true); Voz.onEstado = (e, t) => this.estadoVoz(e, t);
+    $('#mic').onclick = () => { if (Voz.escuchando) Voz.detener(); else { Voz.parar(); Voz.escuchar(false); } };
+    $('#hf').onclick = () => { const on = Voz.alternarManosLibres(); this.toast(on ? L('Manos libres activado' + (Cfg.voz.fraseActiva ? `: decí “${Voz.frase()}”` : ''), 'Hands-free on') : L('Manos libres apagado', 'Hands-free off')); this.estadoVoz('fin'); };
+    $('#cfgBtn').onclick = () => this.abrirConfig(); $('#cfgCerrar').onclick = () => { $('#sCfg').classList.remove('on'); this.marca(); };
+    $('#alertbar').onclick = () => this.enviar(L('alertas', 'alerts'));
+    $('#datosQ').oninput = () => this.renderDatos();
+    $('#foto').onchange = async (e) => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; try { const du = await archivoADataUrl(f, 1600); const r = preguntarFoto(f, du); this.yo('📷'); this.bot(r); } catch (er) { this.toast(String(er.message || er)); } };
+    $('#attach').onclick = () => { if (!(moduloActivo('facturas') && Auth.puede('facturas'))) { this.toast(L('Las fotos no están activadas en esta app.', 'Photos are not enabled.')); return; } $('#foto').click(); };
+    $('#impCerrar').onclick = () => $('#sImp').classList.remove('on'); $('#impTxt').oninput = () => this.previewImport(); $('#impTipo').onchange = () => this.previewImport(); $('#impOk').onclick = () => this.confirmarImport();
+    $('#impFile').onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { $('#impTxt').value = await leerArchivoTabla(f); this.previewImport(); } catch (er) { this.toast(String(er.message || er)); } };
+    $('#userSel').onchange = async () => { const id = $('#userSel').value; const u = Cfg.usuarios.find(x => x.id === id); if (u.rol === 'dueno' && Cfg.pinHash) { if (!(await this.pedirPin())) { this.userSel(); return; } this.unlocked = true; } if (u.rol !== 'dueno') this.unlocked = false; Cfg.usuarioActual = id; guardarCfg(); this.marca(); this.userSel(); this.refrescarDatos(); this.toast(L('Usuario: ', 'User: ') + u.nombre); };
+    this.userSel();
+    if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => { if ($('#sCfg').classList.contains('on')) this.renderConfig(); };
+    // bienvenida
+    this.bot(R(Cfg.tono === 'amigable' ? L(`¡Hola! Soy ${Cfg.asistente} 👋 Estoy para ayudarte con ${Cfg.negocio}. Probá con los atajos de abajo o escribime/hablame.`, `Hi! I'm ${Cfg.asistente} 👋`) : L(`Soy ${Cfg.asistente}. Escribí o hablame. “ayuda” muestra ejemplos.`, `I'm ${Cfg.asistente}. Type or talk to me. “help” shows examples.`)), { mudo: true });
+    if (Cfg.resumenAuto && moduloActivo('reportes') && Auth.puede('reportes')) { const r = hReportes('resumen del dia', 'resumen del dia'); if (r) this.bot(r, { mudo: !Cfg.resumenHablado }); if (Cfg.resumenHablado) Voz.hablar(r.speak || r.text, true); }
+    else if (moduloActivo('reportes')) this.bot(R(L('Si querés el resumen del día, decime “resumen”.', 'For the daily summary, say “summary”.')), { mudo: true });
+    setInterval(() => this.chequearRecordatorios(), 15000); this.chequearRecordatorios();
+    IA.autoCargarLocal();
+    
+    try { if ('Notification' in window && Notification.permission === 'default') $('#msgs').addEventListener('click', () => Notification.requestPermission(), { once: true }); } catch (_) {}
+  },
+  userSel() { const s = $('#userSel'); s.innerHTML = Cfg.usuarios.map(u => `<option value="${u.id}" ${u.id === Cfg.usuarioActual ? 'selected' : ''}>${esc(u.nombre)}</option>`).join(''); }
+};
+
+window.addEventListener('DOMContentLoaded',()=>UI.iniciar());
+</script></body></html>

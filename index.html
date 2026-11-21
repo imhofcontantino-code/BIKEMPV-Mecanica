@@ -346,6 +346,7 @@
       <button class="navbtn" data-page="presupuesto"><span class="ic">🧾</span> Presupuesto</button>
       <button class="navbtn" data-page="stock"><span class="ic">🔧</span> Stock</button>
       <button class="navbtn" data-page="ajustes"><span class="ic">⚙️</span> Ajustes</button>
+      <button class="navbtn" id="btn-asistente" onclick="location.href='motor.html'"><span class="ic">🤖</span> Asistente</button>
       <div class="sidebar-foot">
         <div class="sync-line"><span class="sync-dot" id="sync-dot"></span><span id="sync-text">Sincronizado</span></div>
         <button class="logout-btn" id="btn-logout">Cerrar sesión</button>
@@ -883,6 +884,7 @@ document.getElementById('btn-login').addEventListener('click', ()=>{
   }
 });
 
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ try{ loadLocal(); renderAll(); }catch(e){} } });
 document.getElementById('btn-logout').addEventListener('click', ()=>{
   localStorage.removeItem(SESSION_KEY);
   document.getElementById('app').style.display='none';
